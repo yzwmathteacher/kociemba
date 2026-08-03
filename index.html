@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔方上色控制系统</title>
+    <title>魔方上色 & 控制系统</title>
     <style>
         * {
             margin: 0;
@@ -54,7 +54,7 @@
             border-color: #fff;
             transform: scale(1.08);
         }
-        .w {background: #fff;}
+        .w {background: #ffffff;}
         .y {background: #ffd600;}
         .r {background: #e53935;}
         .o {background: #fb8c00;}
@@ -74,7 +74,9 @@
             font-size: 16px;
             cursor: pointer;
             font-weight: 500;
+            transition: opacity 0.2s;
         }
+        button:disabled {opacity:0.6;cursor:not-allowed;}
         .blue-btn {background: #2196f3; color:white;}
         .orange-btn {background: #fb8c00; color:white;}
         .red-btn {background: #d32f2f; color:white;}
@@ -88,7 +90,7 @@
             margin-top:10px;
         }
 
-        /* 右侧显示区域，固定可见！ */
+        /* 右侧魔方画布区域 */
         .right-view {
             background: #000000;
             border-radius:12px;
@@ -96,16 +98,33 @@
             align-items:center;
             justify-content:center;
         }
-        .demo-box{
-            width:160px;
-            height:160px;
-            background:#2196f3;
-            border-radius:8px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:20px;
+        /* 2D魔方展开布局 */
+        .cube-2d-container{
+            display: grid;
+            grid-template-columns: repeat(4, auto);
+            gap:8px;
         }
+        .face-wrap{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+        }
+        .face-name{
+            margin-bottom:4px;font-size:12px;color:#aaa;
+        }
+        .face{
+            display:grid;
+            grid-template-columns: repeat(3,42px);
+            grid-template-rows: repeat(3,42px);
+            gap:3px;
+        }
+        .tile{
+            border-radius:4px;
+            cursor:pointer;
+            background:#222222;
+            transition:0.15s;
+        }
+        .tile:hover{filter:brightness(1.15);}
     </style>
 </head>
 <body>
@@ -125,40 +144,312 @@
             <p style="font-size:13px;margin-top:8px;color:#ccc">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</p>
         </div>
         <div class="btn-group">
-            <button class="blue-btn" id="solve">一键自动复原魔方</button>
-            <button class="blue-btn" id="play">自动播放复原动画</button>
-            <button class="gray-btn" id="step">单步执行一步还原</button>
-            <button class="orange-btn" id="shuffle">随机打乱魔方</button>
-            <button class="red-btn" id="reset">重置魔方空白</button>
-            <button class="blue-btn" id="standard">一键生成标准完整魔方</button>
+            <button class="blue-btn" id="solveBtn">一键自动复原魔方</button>
+            <button class="blue-btn" id="playBtn">自动播放复原动画</button>
+            <button class="gray-btn" id="stepBtn">单步执行一步还原</button>
+            <button class="orange-btn" id="shuffleBtn">随机打乱魔方</button>
+            <button class="red-btn" id="resetBtn">重置魔方空白</button>
+            <button class="blue-btn" id="standardBtn">一键生成标准完整魔方</button>
         </div>
         <h3>还原步骤</h3>
-        <div class="info-text" id="msg">右侧现在应该显示蓝色方块<br>如果依然全黑，是浏览器环境限制WebGL</div>
+        <div class="info-text" id="msgBox">点击【一键生成标准完整魔方】初始化魔方</div>
     </div>
-    <!-- 右侧画布区域 -->
+    <!-- 右侧2D魔方视图 -->
     <div class="right-view">
-        <div class="demo-box">测试画面</div>
+        <div class="cube-2d-container" id="cubeView"></div>
     </div>
 </div>
 
+<script src="https://unpkg.com/kociemba@2.0.6/dist/kociemba.min.js"></script>
 <script>
-// 颜色选择交互
+// ===================== 全局配置 =====================
+const COLOR_MAP = {
+    U:"#ffffff",
+    D:"#ffd600",
+    R:"#e53935",
+    L:"#fb8c00",
+    F:"#1e88e5",
+    B:"#43a047"
+};
 let selectedColor = "U";
-document.querySelectorAll(".color-block").forEach(item=>{
-    item.onclick = ()=>{
-        document.querySelectorAll(".color-block").forEach(c=>c.classList.remove("active"));
-        item.classList.add("active");
-        selectedColor = item.dataset.val;
-    }
+let animating = false;
+let solveSteps = [];
+let stepIndex = 0;
+
+// 魔方初始数据 U D L R F B
+let cube = {
+    U:["U","U","U","U","U","U","U","U","U"],
+    D:["D","D","D","D","D","D","D","D","D"],
+    L:["L","L","L","L","L","L","L","L","L"],
+    R:["R","R","R","R","R","R","R","R","R"],
+    F:["F","F","F","F","F","F","F","F","F"],
+    B:["B","B","B","B","B","B","B","B","B"]
+};
+
+// ===================== 渲染魔方 =====================
+function renderCube(){
+    const wrap = document.getElementById("cubeView");
+    wrap.innerHTML = "";
+    const displayOrder = ["U","L","F","R","B","D"];
+    displayOrder.forEach(face=>{
+        const wrapDiv = document.createElement("div");
+        wrapDiv.className = "face-wrap";
+
+        const label = document.createElement("div");
+        label.className = "face-name";
+        label.innerText = face;
+        wrapDiv.appendChild(label);
+
+        const faceDiv = document.createElement("div");
+        faceDiv.className = "face";
+        faceDiv.dataset.face = face;
+
+        cube[face].forEach((code,idx)=>{
+            const tile = document.createElement("div");
+            tile.className = "tile";
+            tile.dataset.face = face;
+            tile.dataset.idx = idx;
+            tile.style.background = code ? COLOR_MAP[code] : "#222222";
+            tile.onclick = ()=>{
+                if(animating) return;
+                cube[face][idx] = selectedColor;
+                renderCube();
+            }
+            faceDiv.appendChild(tile);
+        })
+        wrapDiv.appendChild(faceDiv);
+        wrap.appendChild(wrapDiv);
+    })
+}
+
+// ===================== 颜色选择器 =====================
+document.querySelectorAll(".color-block").forEach(el=>{
+    el.addEventListener("click",()=>{
+        document.querySelectorAll(".color-block").forEach(b=>b.classList.remove("active"));
+        el.classList.add("active");
+        selectedColor = el.dataset.val;
+    })
 })
 
-// 按钮占位函数（功能预留）
-document.getElementById("standard").onclick = ()=>{
-    document.getElementById("msg").innerText = "标准魔方初始化指令触发";
+// ===================== 魔方旋转核心算法 =====================
+function rotateClockwise(faceArr){
+    return [faceArr[6],faceArr[3],faceArr[0],
+            faceArr[7],faceArr[4],faceArr[1],
+            faceArr[8],faceArr[5],faceArr[2]];
 }
-document.getElementById("shuffle").onclick = ()=>{
-    document.getElementById("msg").innerText = "打乱指令触发";
+function rotateAntiClockwise(faceArr){
+    return [faceArr[2],faceArr[5],faceArr[8],
+            faceArr[1],faceArr[4],faceArr[7],
+            faceArr[0],faceArr[3],faceArr[6]];
 }
+
+// 执行转动指令 U,U2,U',D,D2,D',R,R2,R',L,L2,L',F,F2,F',B,B2,B'
+async function doMove(move){
+    return new Promise(resolve=>{
+        const type = move;
+        let times = 1;
+        let reverse = false;
+        if(type.includes("2")) times = 2;
+        if(type.includes("_") || type.includes("'")) reverse = true;
+        const face = type.replace("2","").replace("_","").replace("'","");
+
+        for(let t=0;t<times;t++){
+            if(!reverse){
+                cube[face] = rotateClockwise(cube[face]);
+                rotateAdjacent(face,true);
+            }else{
+                cube[face] = rotateAntiClockwise(cube[face]);
+                rotateAdjacent(face,false);
+            }
+        }
+        renderCube();
+        setTimeout(resolve,220);
+    })
+}
+
+// 相邻侧边联动（魔方旋转关键）
+function rotateAdjacent(face,clockwise){
+    let temp;
+    switch(face){
+        case "U":
+            temp = [...cube.F.slice(0,3)];
+            if(clockwise){
+                cube.F.splice(0,3,...cube.R.slice(0,3));
+                cube.R.splice(0,3,...cube.B.slice(0,3));
+                cube.B.splice(0,3,...cube.L.slice(0,3));
+                cube.L.splice(0,3,...temp);
+            }else{
+                cube.F.splice(0,3,...cube.L.slice(0,3));
+                cube.L.splice(0,3,...cube.B.slice(0,3));
+                cube.B.splice(0,3,...cube.R.slice(0,3));
+                cube.R.splice(0,3,...temp);
+            }
+            break;
+        case "D":
+            temp = [...cube.F.slice(6,9)];
+            if(clockwise){
+                cube.F.splice(6,3,...cube.L.slice(6,9));
+                cube.L.splice(6,3,...cube.B.slice(6,9));
+                cube.B.splice(6,3,...cube.R.slice(6,9));
+                cube.R.splice(6,3,...temp);
+            }else{
+                cube.F.splice(6,3,...cube.R.slice(6,9));
+                cube.R.splice(6,3,...cube.B.slice(6,9));
+                cube.B.splice(6,3,...cube.L.slice(6,9));
+                cube.L.splice(6,3,...temp);
+            }
+            break;
+        case "R":
+            temp = [cube.F[2],cube.F[5],cube.F[8]];
+            if(clockwise){
+                [cube.F[2],cube.F[5],cube.F[8]] = [cube.D[2],cube.D[5],cube.D[8]];
+                [cube.D[2],cube.D[5],cube.D[8]] = [cube.B[6],cube.B[3],cube.B[0]];
+                [cube.B[6],cube.B[3],cube.B[0]] = [cube.U[2],cube.U[5],cube.U[8]];
+                [cube.U[2],cube.U[5],cube.U[8]] = temp;
+            }else{
+                [cube.F[2],cube.F[5],cube.F[8]] = [cube.U[2],cube.U[5],cube.U[8]];
+                [cube.U[2],cube.U[5],cube.U[8]] = [cube.B[6],cube.B[3],cube.B[0]];
+                [cube.B[6],cube.B[3],cube.B[0]] = [cube.D[2],cube.D[5],cube.D[8]];
+                [cube.D[2],cube.D[5],cube.D[8]] = temp;
+            }
+            break;
+        case "L":
+            temp = [cube.F[0],cube.F[3],cube.F[6]];
+            if(clockwise){
+                [cube.F[0],cube.F[3],cube.F[6]] = [cube.U[0],cube.U[3],cube.U[6]];
+                [cube.U[0],cube.U[3],cube.U[6]] = [cube.B[8],cube.B[5],cube.B[2]];
+                [cube.B[8],cube.B[5],cube.B[2]] = [cube.D[0],cube.D[3],cube.D[6]];
+                [cube.D[0],cube.D[3],cube.D[6]] = temp;
+            }else{
+                [cube.F[0],cube.F[3],cube.F[6]] = [cube.D[0],cube.D[3],cube.D[6]];
+                [cube.D[0],cube.D[3],cube.D[6]] = [cube.B[8],cube.B[5],cube.B[2]];
+                [cube.B[8],cube.B[5],cube.B[2]] = [cube.U[0],cube.U[3],cube.U[6]];
+                [cube.U[0],cube.U[3],cube.U[6]] = temp;
+            }
+            break;
+        case "F":
+            temp = [cube.U[6],cube.U[7],cube.U[8]];
+            if(clockwise){
+                [cube.U[6],cube.U[7],cube.U[8]] = [cube.L[8],cube.L[5],cube.L[2]];
+                [cube.L[8],cube.L[5],cube.L[2]] = [cube.D[0],cube.D[1],cube.D[2]];
+                [cube.D[0],cube.D[1],cube.D[2]] = [cube.R[0],cube.R[3],cube.R[6]];
+                [cube.R[0],cube.R[3],cube.R[6]] = temp;
+            }else{
+                [cube.U[6],cube.U[7],cube.U[8]] = [cube.R[0],cube.R[3],cube.R[6]];
+                [cube.R[0],cube.R[3],cube.R[6]] = [cube.D[0],cube.D[1],cube.D[2]];
+                [cube.D[0],cube.D[1],cube.D[2]] = [cube.L[8],cube.L[5],cube.L[2]];
+                [cube.L[8],cube.L[5],cube.L[2]] = temp;
+            }
+            break;
+        case "B":
+            temp = [cube.U[0],cube.U[1],cube.U[2]];
+            if(clockwise){
+                [cube.U[0],cube.U[1],cube.U[2]] = [cube.R[8],cube.R[5],cube.R[2]];
+                [cube.R[8],cube.R[5],cube.R[2]] = [cube.D[8],cube.D[7],cube.D[6]];
+                [cube.D[8],cube.D[7],cube.D[6]] = [cube.L[0],cube.L[3],cube.L[6]];
+                [cube.L[0],cube.L[3],cube.L[6]] = temp;
+            }else{
+                [cube.U[0],cube.U[1],cube.U[2]] = [cube.L[0],cube.L[3],cube.L[6]];
+                [cube.L[0],cube.L[3],cube.L[6]] = [cube.D[8],cube.D[7],cube.D[6]];
+                [cube.D[8],cube.D[7],cube.D[6]] = [cube.R[8],cube.R[5],cube.R[2]];
+                [cube.R[8],cube.R[5],cube.R[2]] = temp;
+            }
+            break;
+    }
+}
+
+// ===================== Kociemba编码转换 =====================
+function getCubeCode(){
+    let str = "";
+    const order = ["U","D","L","R","F","B"];
+    order.forEach(f=>{
+        cube[f].forEach(c=>{
+            if(!c) throw new Error("空白色块");
+            str += c;
+        })
+    })
+    return str;
+}
+
+function setButtonState(disable){
+    document.querySelectorAll(".btn-group button").forEach(btn=>btn.disabled = disable);
+}
+
+// ===================== 按钮事件绑定 =====================
+// 标准魔方
+document.getElementById("standardBtn").onclick = ()=>{
+    cube = {
+        U:["U","U","U","U","U","U","U","U","U"],
+        D:["D","D","D","D","D","D","D","D","D"],
+        L:["L","L","L","L","L","L","L","L","L"],
+        R:["R","R","R","R","R","R","R","R","R"],
+        F:["F","F","F","F","F","F","F","F","F"],
+        B:["B","B","B","B","B","B","B","B","B"]
+    };
+    solveSteps = [];stepIndex=0;
+    renderCube();
+    document.getElementById("msgBox").innerText = "✅ 标准完整魔方已生成";
+}
+
+// 重置空白
+document.getElementById("resetBtn").onclick = ()=>{
+    Object.keys(cube).forEach(k=>cube[k] = Array(9).fill(null));
+    solveSteps = [];stepIndex=0;
+    renderCube();
+    document.getElementById("msgBox").innerText = "🗑️ 魔方已清空，请手动涂色";
+}
+
+// 求解
+document.getElementById("solveBtn").onclick = ()=>{
+    try{
+        const code = getCubeCode();
+        const result = kociemba.solve(code);
+        solveSteps = result.split(" ").filter(x=>x.trim());
+        stepIndex = 0;
+        document.getElementById("msgBox").innerText = `📝最优解法：${result}\n总步数：${solveSteps.length}`;
+    }catch(err){
+        document.getElementById("msgBox").innerText = "❌色块不完整/魔方无效！填满所有方块再求解";
+    }
+}
+
+// 单步还原
+document.getElementById("stepBtn").onclick = async ()=>{
+    if(animating || solveSteps.length===0 || stepIndex >= solveSteps.length) return;
+    animating = true; setButtonState(true);
+    await doMove(solveSteps[stepIndex]);
+    stepIndex++;
+    document.getElementById("msgBox").innerText = `进度：${stepIndex}/${solveSteps.length}`;
+    animating = false; setButtonState(false);
+}
+
+// 自动播放全部动画
+document.getElementById("playBtn").onclick = async ()=>{
+    if(animating || solveSteps.length===0) return;
+    animating = true; setButtonState(true);
+    for(;stepIndex < solveSteps.length;stepIndex++){
+        await doMove(solveSteps[stepIndex]);
+        document.getElementById("msgBox").innerText = `还原进度：${stepIndex+1}/${solveSteps.length}`;
+    }
+    document.getElementById("msgBox").innerText += "\n🎉魔方还原完成！";
+    animating = false; setButtonState(false);
+}
+
+// 随机打乱
+document.getElementById("shuffleBtn").onclick = async ()=>{
+    if(animating) return;
+    animating = true; setButtonState(true);
+    const moves = ["U","U_","D","D_","R","R_","L","L_","F","F_","B","B_"];
+    for(let i=0;i<22;i++){
+        const rnd = moves[Math.floor(Math.random()*moves.length)];
+        await doMove(rnd);
+    }
+    solveSteps = [];stepIndex=0;
+    document.getElementById("msgBox").innerText = "🔀魔方已随机打乱，点击【一键自动复原魔方】计算解法";
+    animating = false; setButtonState(false);
+}
+
+// 初始化渲染
+renderCube();
 </script>
 </body>
 </html>
