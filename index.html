@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>3D魔方自动复原系统</title>
+<title>3阶魔方模拟器 | 无穿模WebGL版</title>
 <style>
     * {
         margin: 0;
@@ -11,20 +11,18 @@
         box-sizing: border-box;
         font-family: system-ui, -apple-system, sans-serif;
     }
-
     body {
         background: #1a1a2e;
         color: #fff;
-        padding: 18px;
+        overflow: hidden;
     }
-
     .main-wrap {
         display: grid;
         grid-template-columns: 320px 1fr;
         gap: 24px;
-        height: calc(100vh - 36px);
+        height: 100vh;
+        padding: 18px;
     }
-
     .left-panel {
         background: #16213e;
         padding: 20px;
@@ -32,24 +30,15 @@
         height: 100%;
         overflow-y: auto;
     }
-
-    .left-panel h2 {
-        color: #4fc3f7;
-        margin-bottom: 16px;
-        font-size: 22px;
-    }
-
     .color-area {
         margin-bottom: 20px;
     }
-
     .color-row {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
         margin-top: 10px;
     }
-
     .color-block {
         width: 48px;
         height: 48px;
@@ -57,12 +46,10 @@
         cursor: pointer;
         border: 3px solid transparent;
     }
-
     .color-block.active {
-        border-color: #fff;
+        border-color: #ffffff;
         transform: scale(1.08);
     }
-
     .w { background: #ffffff; }
     .y { background: #ffd600; }
     .r { background: #e53935; }
@@ -76,7 +63,6 @@
         gap: 10px;
         margin: 20px 0;
     }
-
     button {
         padding: 14px;
         border: none;
@@ -84,153 +70,44 @@
         font-size: 16px;
         cursor: pointer;
         font-weight: 500;
-        transition: opacity 0.2s;
+        transition: 0.2s;
     }
-
     button:disabled {
-        opacity: 0.6;
+        opacity: 0.55;
         cursor: not-allowed;
     }
-
     .blue-btn { background: #2196f3; color: white; }
     .orange-btn { background: #fb8c00; color: white; }
     .red-btn { background: #d32f2f; color: white; }
-    .gray-btn { background: #eeeeee; color: #222; }
+    .gray-btn { background: #eeeeee; color: #111111; }
 
     .info-text {
         background: #0f3460;
         padding: 14px;
         border-radius: 8px;
-        min-height: 100px;
+        min-height: 110px;
         line-height: 1.6;
         margin-top: 10px;
         font-size: 14px;
     }
-
     .tip {
         font-size: 12px;
         color: #b0b0b0;
         margin-top: 8px;
         line-height: 1.5;
     }
-
-    /* 右侧3D魔方区域 */
-    .right-view {
-        background: #000;
+    #canvas-container {
+        background: #000000;
         border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
         overflow: hidden;
     }
-
-    .scene {
-        width: 300px;
-        height: 300px;
-        perspective: 800px;
-        cursor: grab;
-    }
-
-    .scene:active {
-        cursor: grabbing;
-    }
-
-    .cube-wrapper {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        transform-style: preserve-3d;
-        transition: transform 0.1s ease-out;
-    }
-
-    .cubie {
-        position: absolute;
-        width: 96px;
-        height: 96px;
-        transform-style: preserve-3d;
-    }
-
-    .cubie .face {
-        position: absolute;
-        width: 96px;
-        height: 96px;
-        border-radius: 8px;
-        border: 2px solid #111;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: bold;
-        color: rgba(0,0,0,0.35);
-        cursor: pointer;
-        transition: filter 0.15s;
-    }
-
-    .cubie .face:hover {
-        filter: brightness(1.15);
-    }
-
-    .cubie .face.U { background: #ffffff; }
-    .cubie .face.D { background: #ffd600; }
-    .cubie .face.R { background: #e53935; }
-    .cubie .face.L { background: #fb8c00; }
-    .cubie .face.F { background: #1e88e5; }
-    .cubie .face.B { background: #43a047; }
-    .cubie .face.X { background: #222222; }
-
-    .cubie .front  { transform: translateZ(48px); }
-    .cubie .back   { transform: rotateY(180deg) translateZ(48px); }
-    .cubie .right  { transform: rotateY(90deg) translateZ(48px); }
-    .cubie .left   { transform: rotateY(-90deg) translateZ(48px); }
-    .cubie .top    { transform: rotateX(90deg) translateZ(48px); }
-    .cubie .bottom { transform: rotateX(-90deg) translateZ(48px); }
-
-    /* 魔方位置：3x3 */
-    .cubie:nth-child(1)  { transform: translate3d(-100px, -100px, -100px); }
-    .cubie:nth-child(2)  { transform: translate3d(   0px, -100px, -100px); }
-    .cubie:nth-child(3)  { transform: translate3d( 100px, -100px, -100px); }
-
-    .cubie:nth-child(4)  { transform: translate3d(-100px,    0px, -100px); }
-    .cubie:nth-child(5)  { transform: translate3d(   0px,    0px, -100px); }
-    .cubie:nth-child(6)  { transform: translate3d( 100px,    0px, -100px); }
-
-    .cubie:nth-child(7)  { transform: translate3d(-100px,  100px, -100px); }
-    .cubie:nth-child(8)  { transform: translate3d(   0px,  100px, -100px); }
-    .cubie:nth-child(9)  { transform: translate3d( 100px,  100px, -100px); }
-
-    .cubie:nth-child(10) { transform: translate3d(-100px, -100px,    0px); }
-    .cubie:nth-child(11) { transform: translate3d(   0px, -100px,    0px); }
-    .cubie:nth-child(12) { transform: translate3d( 100px, -100px,    0px); }
-
-    .cubie:nth-child(13) { transform: translate3d(-100px,    0px,    0px); }
-    .cubie:nth-child(14) { transform: translate3d(   0px,    0px,    0px); }
-    .cubie:nth-child(15) { transform: translate3d( 100px,    0px,    0px); }
-
-    .cubie:nth-child(16) { transform: translate3d(-100px,  100px,    0px); }
-    .cubie:nth-child(17) { transform: translate3d(   0px,  100px,    0px); }
-    .cubie:nth-child(18) { transform: translate3d( 100px,  100px,    0px); }
-
-    .cubie:nth-child(19) { transform: translate3d(-100px, -100px,  100px); }
-    .cubie:nth-child(20) { transform: translate3d(   0px, -100px,  100px); }
-    .cubie:nth-child(21) { transform: translate3d( 100px, -100px,  100px); }
-
-    .cubie:nth-child(22) { transform: translate3d(-100px,    0px,  100px); }
-    .cubie:nth-child(23) { transform: translate3d(   0px,    0px,  100px); }
-    .cubie:nth-child(24) { transform: translate3d( 100px,    0px,  100px); }
-
-    .cubie:nth-child(25) { transform: translate3d(-100px,  100px,  100px); }
-    .cubie:nth-child(26) { transform: translate3d(   0px,  100px,  100px); }
-    .cubie:nth-child(27) { transform: translate3d( 100px,  100px,  100px); }
 </style>
 </head>
 <body>
-
 <div class="main-wrap">
     <div class="left-panel">
         <h2>魔方上色 & 控制</h2>
-        <p>选择颜色后点击立体魔方表面填充</p>
-
+        <p>选择颜色后点击魔方表面填充</p>
         <div class="color-area">
             <div class="color-row">
                 <div class="color-block w active" data-val="U"></div>
@@ -242,7 +119,6 @@
             </div>
             <div class="tip">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</div>
         </div>
-
         <div class="btn-group">
             <button class="blue-btn" id="solveBtn">一键自动复原魔方</button>
             <button class="blue-btn" id="playBtn">自动播放复原动画</button>
@@ -251,444 +127,317 @@
             <button class="red-btn" id="resetBtn">重置魔方空白</button>
             <button class="blue-btn" id="standardBtn">一键生成标准完整魔方</button>
         </div>
-
         <h3>还原步骤</h3>
         <div class="info-text" id="msgBox">点击【一键生成标准完整魔方】开始操作</div>
-
         <div class="tip">
-            鼠标拖拽可旋转视角；点击小方块表面可修改颜色。
+            鼠标拖拽旋转视角；左键点击方块表面涂色<br>
+            ⚠️动画运行中请勿重复点击按钮
         </div>
     </div>
-
-    <div class="right-view">
-        <div class="scene" id="scene">
-            <div class="cube-wrapper" id="cubeWrapper"></div>
-        </div>
-    </div>
+    <div id="canvas-container"></div>
 </div>
 
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://unpkg.com/kociemba@2.0.6/dist/kociemba.min.js"></script>
 <script>
-const COLOR_MAP = {
-    U: "#ffffff",
-    D: "#ffd600",
-    R: "#e53935",
-    L: "#fb8c00",
-    F: "#1e88e5",
-    B: "#43a047",
-    X: "#222222"
+// ===================== 全局配置 =====================
+const COLOR_HEX = {
+    U: 0xffffff,
+    D: 0xffd600,
+    R: 0xe53935,
+    L: 0xfb8c00,
+    F: 0x1e88e5,
+    B: 0x43a047,
+    X: 0x222222
 };
-
-const FACE_ORDER = ["U", "D", "L", "R", "F", "B"];
-
+const COLOR_CHAR = ['U','D','L','R','F','B'];
 let selectedColor = "U";
 let animating = false;
 let solveSteps = [];
 let stepIndex = 0;
+const MOVE_DURATION = 220;
 
-let cubeRotation = { x: -25, y: 45 };
-let isDragging = false;
-let startX = 0;
-let startY = 0;
+// ===================== Three.js 初始化 =====================
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 200);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+camera.position.set(4.2, 4.2, 6.2);
 
-const cubeWrapper = document.getElementById("cubeWrapper");
-const scene = document.getElementById("scene");
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
 
-// 27个小方块的六个面颜色，X表示不可见/黑色
-let cubeState = [];
+// 灯光
+scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+dirLight.position.set(6, 10, 8);
+scene.add(dirLight);
 
-function initCubeState() {
-    cubeState = [];
-    for (let i = 0; i < 27; i++) {
-        cubeState.push({
-            U: "X",
-            D: "X",
-            L: "X",
-            R: "X",
-            F: "X",
-            B: "X"
-        });
+// 射线拾取（点击上色）
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+// ===================== 魔方核心类 =====================
+class RubikCube {
+    constructor() {
+        this.cubies = [];
+        this.initGeometry();
+        this.resetBlank();
     }
-}
-
-function createCubie() {
-    const cubie = document.createElement("div");
-    cubie.className = "cubie";
-
-    ["top", "bottom", "left", "right", "front", "back"].forEach(pos => {
-        const face = document.createElement("div");
-        face.className = `face ${pos}`;
-        face.dataset.pos = pos;
-        cubie.appendChild(face);
-    });
-
-    return cubie;
-}
-
-function createCube() {
-    cubeWrapper.innerHTML = "";
-    for (let i = 0; i < 27; i++) {
-        cubeWrapper.appendChild(createCubie());
-    }
-}
-
-function refreshCube() {
-    const cubies = document.querySelectorAll(".cubie");
-
-    cubies.forEach((cubie, index) => {
-        const faces = cubie.querySelectorAll(".face");
-
-        faces.forEach(face => {
-            const pos = face.dataset.pos;
-            const code = cubeState[index][pos] || "X";
-
-            face.className = `face ${pos} ${code}`;
-            face.dataset.faceCode = code;
-        });
-    });
-}
-
-function setStandardCube() {
-    initCubeState();
-
-    const layout = [
-        { i: 0, U: "U", L: "L", B: "B" },
-        { i: 1, U: "U", B: "B" },
-        { i: 2, U: "U", R: "R", B: "B" },
-
-        { i: 3, L: "L", B: "B" },
-        { i: 4, B: "B" },
-        { i: 5, R: "R", B: "B" },
-
-        { i: 6, D: "D", L: "L", B: "B" },
-        { i: 7, D: "D", B: "B" },
-        { i: 8, D: "D", R: "R", B: "B" },
-
-        { i: 9, U: "U", L: "L" },
-        { i: 10, U: "U" },
-        { i: 11, U: "U", R: "R" },
-
-        { i: 12, L: "L" },
-        { i: 13, F: "F", U: "U", D: "D", L: "L", R: "R", B: "B" },
-        { i: 14, R: "R" },
-
-        { i: 15, D: "D", L: "L" },
-        { i: 16, D: "D" },
-        { i: 17, D: "D", R: "R" },
-
-        { i: 18, U: "U", L: "L", F: "F" },
-        { i: 19, U: "U", F: "F" },
-        { i: 20, U: "U", R: "R", F: "F" },
-
-        { i: 21, L: "L", F: "F" },
-        { i: 22, F: "F" },
-        { i: 23, R: "R", F: "F" },
-
-        { i: 24, D: "D", L: "L", F: "F" },
-        { i: 25, D: "D", F: "F" },
-        { i: 26, D: "D", R: "R", F: "F" }
-    ];
-
-    layout.forEach(item => {
-        Object.keys(item).forEach(key => {
-            if (key !== "i") {
-                cubeState[item.i][key] = item[key];
+    initGeometry() {
+        const cubeSize = 0.93;
+        const geo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        const blackMat = new THREE.MeshLambertMaterial({ color: COLOR_HEX.X });
+        for(let x=-1;x<=1;x++){
+            for(let y=-1;y<=1;y++){
+                for(let z=-1;z<=1;z++){
+                    const mats = [
+                        blackMat.clone(), blackMat.clone(),
+                        blackMat.clone(), blackMat.clone(),
+                        blackMat.clone(), blackMat.clone()
+                    ];
+                    const mesh = new THREE.Mesh(geo, mats);
+                    mesh.position.set(x, y, z);
+                    scene.add(mesh);
+                    this.cubies.push({
+                        mesh,
+                        x, y, z,
+                        materials: mats
+                    });
+                }
             }
-        });
-    });
-
-    refreshCube();
-    document.getElementById("msgBox").innerText = "✅ 标准完整魔方已生成";
-}
-
-function resetCube() {
-    initCubeState();
-    refreshCube();
-    solveSteps = [];
-    stepIndex = 0;
-    document.getElementById("msgBox").innerText = "🗑️ 魔方已清空，请手动涂色";
-}
-
-function bindColorPicker() {
-    document.querySelectorAll(".color-block").forEach(el => {
-        el.addEventListener("click", () => {
-            document.querySelectorAll(".color-block").forEach(b => b.classList.remove("active"));
-            el.classList.add("active");
-            selectedColor = el.dataset.val;
-        });
-    });
-}
-
-function bindCubeClick() {
-    document.querySelectorAll(".face").forEach(face => {
-        face.addEventListener("click", () => {
-            if (animating) return;
-
-            const cubie = face.parentElement;
-            const index = Array.from(cubeWrapper.children).indexOf(cubie);
-            const pos = face.dataset.pos;
-
-            cubeState[index][pos] = selectedColor;
-            refreshCube();
-        });
-    });
-}
-
-function rotateCubeWrapper() {
-    cubeWrapper.style.transform = `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`;
-}
-
-function bindDrag() {
-    scene.addEventListener("mousedown", e => {
-        if (animating) return;
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-    });
-
-    window.addEventListener("mousemove", e => {
-        if (!isDragging) return;
-
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-
-        cubeRotation.y += deltaX * 0.5;
-        cubeRotation.x -= deltaY * 0.5;
-
-        startX = e.clientX;
-        startY = e.clientY;
-
-        rotateCubeWrapper();
-    });
-
-    window.addEventListener("mouseup", () => {
-        isDragging = false;
-    });
-}
-
-function getCubeCode() {
-    let code = "";
-
-    const faceMaps = [
-        { face: "U", indices: [0, 1, 2, 9, 10, 11, 18, 19, 20], pos: "U" },
-        { face: "D", indices: [6, 7, 8, 15, 16, 17, 24, 25, 26], pos: "D" },
-        { face: "L", indices: [0, 3, 6, 9, 12, 15, 18, 21, 24], pos: "L" },
-        { face: "R", indices: [2, 5, 8, 11, 14, 17, 20, 23, 26], pos: "R" },
-        { face: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26], pos: "F" },
-        { face: "B", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8], pos: "B" }
-    ];
-
-    faceMaps.forEach(({ face, indices, pos }) => {
-        indices.forEach(i => {
-            const c = cubeState[i][pos];
-            if (!c || c === "X") {
-                throw new Error("存在未填充色块");
-            }
-            code += c;
-        });
-    });
-
-    return code;
-}
-
-function setButtonState(disable) {
-    document.querySelectorAll(".btn-group button").forEach(btn => btn.disabled = disable);
-}
-
-document.getElementById("standardBtn").onclick = setStandardCube;
-document.getElementById("resetBtn").onclick = resetCube;
-
-document.getElementById("shuffleBtn").onclick = async () => {
-    if (animating) return;
-
-    animating = true;
-    setButtonState(true);
-
-    const moves = ["U", "U'", "D", "D'", "R", "R'", "L", "L'", "F", "F'", "B", "B'"];
-
-    for (let i = 0; i < 20; i++) {
-        const move = moves[Math.floor(Math.random() * moves.length)];
-        await doMove(move);
-    }
-
-    solveSteps = [];
-    stepIndex = 0;
-    animating = false;
-    setButtonState(false);
-
-    document.getElementById("msgBox").innerText = "🔀 魔方已随机打乱";
-};
-
-document.getElementById("solveBtn").onclick = () => {
-    try {
-        const code = getCubeCode();
-        const result = kociemba.solve(code);
-        solveSteps = result.split(" ").filter(x => x.trim());
-        stepIndex = 0;
-
-        document.getElementById("msgBox").innerText = `📝 最优解法：${result}\n总步数：${solveSteps.length}`;
-    } catch (err) {
-        document.getElementById("msgBox").innerText = "❌ 色块不完整或魔方无效！\n请先点击【一键生成标准完整魔方】，再打乱后求解。";
-    }
-};
-
-document.getElementById("stepBtn").onclick = async () => {
-    if (animating || solveSteps.length === 0 || stepIndex >= solveSteps.length) return;
-
-    animating = true;
-    setButtonState(true);
-
-    await doMove(solveSteps[stepIndex]);
-    stepIndex++;
-
-    document.getElementById("msgBox").innerText = `进度：${stepIndex}/${solveSteps.length}`;
-
-    animating = false;
-    setButtonState(false);
-};
-
-document.getElementById("playBtn").onclick = async () => {
-    if (animating || solveSteps.length === 0) return;
-
-    animating = true;
-    setButtonState(true);
-
-    for (; stepIndex < solveSteps.length; stepIndex++) {
-        await doMove(solveSteps[stepIndex]);
-        document.getElementById("msgBox").innerText = `还原进度：${stepIndex + 1}/${solveSteps.length}`;
-    }
-
-    document.getElementById("msgBox").innerText += "\n🎉 魔方还原完成！";
-
-    animating = false;
-    setButtonState(false);
-};
-
-async function doMove(move) {
-    return new Promise(resolve => {
-        const map = {
-            U:  { axis: "y", layer: "top",    angle: 90,  reverse: false },
-            "U'": { axis: "y", layer: "top",    angle: -90, reverse: true  },
-            U2: { axis: "y", layer: "top",    angle: 180, reverse: false },
-            D:  { axis: "y", layer: "bottom", angle: -90, reverse: false },
-            "D'": { axis: "y", layer: "bottom", angle: 90,  reverse: true  },
-            D2: { axis: "y", layer: "bottom", angle: 180, reverse: false },
-            R:  { axis: "x", layer: "right",  angle: 90,  reverse: false },
-            "R'": { axis: "x", layer: "right",  angle: -90, reverse: true  },
-            R2: { axis: "x", layer: "right",  angle: 180, reverse: false },
-            L:  { axis: "x", layer: "left",   angle: -90, reverse: false },
-            "L'": { axis: "x", layer: "left",   angle: 90,  reverse: true  },
-            L2: { axis: "x", layer: "left",   angle: 180, reverse: false },
-            F:  { axis: "z", layer: "front",  angle: 90,  reverse: false },
-            "F'": { axis: "z", layer: "front",  angle: -90, reverse: true  },
-            F2: { axis: "z", layer: "front",  angle: 180, reverse: false },
-            B:  { axis: "z", layer: "back",   angle: -90, reverse: false },
-            "B'": { axis: "z", layer: "back",   angle: 90,  reverse: true  },
-            B2: { axis: "z", layer: "back",   angle: 180, reverse: false }
-        };
-
-        const action = map[move];
-
-        if (!action) {
-            resolve();
-            return;
         }
-
-        const layer = getLayerCubies(action.layer);
-
-        layer.forEach(cubie => {
-            cubie.style.transition = "transform 0.25s ease-out";
-            cubie.style.transform += ` rotate${action.axis.toUpperCase()}(${action.angle}deg)`;
-        });
-
-        setTimeout(() => {
-            layer.forEach(cubie => {
-                cubie.style.transition = "";
-                cubie.style.transform = cubie.dataset.baseTransform;
+    }
+    // 重置全部黑色空白
+    resetBlank() {
+        for(const cb of this.cubies){
+            for(let i=0;i<6;i++) cb.materials[i].color.setHex(COLOR_HEX.X);
+        }
+        this.printMsg("🗑️魔方已清空，可手动涂色");
+    }
+    // 标准复原魔方配色
+    setStandardCube() {
+        const faceMap = [
+            {axis:'y',val:1,faceIdx:0,code:'U'},
+            {axis:'y',val:-1,faceIdx:1,code:'D'},
+            {axis:'x',val:-1,faceIdx:2,code:'L'},
+            {axis:'x',val:1,faceIdx:3,code:'R'},
+            {axis:'z',val:1,faceIdx:4,code:'F'},
+            {axis:'z',val:-1,faceIdx:5,code:'B'},
+        ];
+        for(const cb of this.cubies){
+            const {x,y,z,materials} = cb;
+            for(let i=0;i<6;i++) materials[i].color.setHex(COLOR_HEX.X);
+            for(const fm of faceMap){
+                if(cb[fm.axis] === fm.val){
+                    materials[fm.faceIdx].color.setHex(COLOR_HEX[fm.code]);
+                }
+            }
+        }
+        this.printMsg("✅标准完整魔方生成成功");
+    }
+    printMsg(text){
+        document.getElementById("msgBox").innerText = text;
+    }
+    // 获取kociemba标准编码
+    getKociembaString(){
+        let str = "";
+        const orderFaces = [
+            {axis:'y',val:1,idx:0, order:[[-1,1],[0,1],[1,1],[-1,0],[0,0],[1,0],[-1,-1],[0,-1],[1,-1]]}, //U
+            {axis:'y',val:-1,idx:1, order:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]}, //D
+            {axis:'x',val:-1,idx:2, order:[[-1,1],[-1,0],[-1,-1],[0,1],[0,0],[0,-1],[1,1],[1,0],[1,-1]]}, //L
+            {axis:'x',val:1,idx:3, order:[[1,1],[1,0],[1,-1],[0,1],[0,0],[0,-1],[-1,1],[-1,0],[-1,-1]]}, //R
+            {axis:'z',val:1,idx:4, order:[[-1,1],[0,1],[1,1],[-1,0],[0,0],[1,0],[-1,-1],[0,-1],[1,-1]]}, //F
+            {axis:'z',val:-1,idx:5, order:[[1,1],[0,1],[-1,1],[1,0],[0,0],[-1,0],[1,-1],[0,-1],[-1,-1]]}, //B
+        ];
+        for(const f of orderFaces){
+            for(const [px,pz] of f.order){
+                const target = this.cubies.find(c=>c.x===px && c.y===f.val && c.z===pz);
+                const colorHex = target.materials[f.idx].color.getHex();
+                const char = COLOR_CHAR.find(ch=>COLOR_HEX[ch] === colorHex);
+                if(!char) throw new Error("色块不全/存在非法黑色");
+                str += char;
+            }
+        }
+        return str;
+    }
+    // 执行转动带动画
+    async doMove(moveStr) {
+        return new Promise(resolve=>{
+            const moveCfg = {
+                "U": {axis:"y", layerY:1, angle:Math.PI/2},
+                "U'":{axis:"y", layerY:1, angle:-Math.PI/2},
+                "U2":{axis:"y", layerY:1, angle:Math.PI},
+                "D": {axis:"y", layerY:-1, angle:-Math.PI/2},
+                "D'":{axis:"y", layerY:-1, angle:Math.PI/2},
+                "D2":{axis:"y", layerY:-1, angle:Math.PI},
+                "R": {axis:"x", layerX:1, angle:Math.PI/2},
+                "R'":{axis:"x", layerX:1, angle:-Math.PI/2},
+                "R2":{axis:"x", layerX:1, angle:Math.PI},
+                "L": {axis:"x", layerX:-1, angle:-Math.PI/2},
+                "L'":{axis:"x", layerX:-1, angle:Math.PI/2},
+                "L2":{axis:"x", layerX:-1, angle:Math.PI},
+                "F": {axis:"z", layerZ:1, angle:Math.PI/2},
+                "F'":{axis:"z", layerZ:1, angle:-Math.PI/2},
+                "F2":{axis:"z", layerZ:1, angle:Math.PI},
+                "B": {axis:"z", layerZ:-1, angle:-Math.PI/2},
+                "B'":{axis:"z", layerZ:-1, angle:Math.PI/2},
+                "B2":{axis:"z", layerZ:-1, angle:Math.PI},
+            }[moveStr];
+            if(!moveCfg){resolve();return;}
+            // 筛选需要旋转的小块
+            const layer = this.cubies.filter(cb=>{
+                if(moveCfg.layerX !== undefined) return cb.x === moveCfg.layerX;
+                if(moveCfg.layerY !== undefined) return cb.y === moveCfg.layerY;
+                if(moveCfg.layerZ !== undefined) return cb.z === moveCfg.layerZ;
+                return false;
             });
+            const startTime = performance.now();
+            const startPos = layer.map(cb=>cb.mesh.position.clone());
+            const animate = ()=>{
+                const t = Math.min(1, (performance.now()-startTime)/MOVE_DURATION);
+                const rotAngle = moveCfg.angle * t;
+                const quat = new THREE.Quaternion();
+                if(moveCfg.axis === "x") quat.setFromAxisAngle(new THREE.Vector3(1,0,0), rotAngle);
+                if(moveCfg.axis === "y") quat.setFromAxisAngle(new THREE.Vector3(0,1,0), rotAngle);
+                if(moveCfg.axis === "z") quat.setFromAxisAngle(new THREE.Vector3(0,0,1), rotAngle);
+                layer.forEach((cb,idx)=>{
+                    cb.mesh.position.copy(startPos[idx]).applyQuaternion(quat);
+                });
+                if(t<1){
+                    requestAnimationFrame(animate);
+                }else{
+                    // 动画结束永久更新坐标
+                    const finalQuat = new THREE.Quaternion();
+                    if(moveCfg.axis === "x") finalQuat.setFromAxisAngle(new THREE.Vector3(1,0,0), moveCfg.angle);
+                    if(moveCfg.axis === "y") finalQuat.setFromAxisAngle(new THREE.Vector3(0,1,0), moveCfg.angle);
+                    if(moveCfg.axis === "z") finalQuat.setFromAxisAngle(new THREE.Vector3(0,0,1), moveCfg.angle);
+                    layer.forEach((cb,idx)=>{
+                        cb.x = startPos[idx].clone().applyQuaternion(finalQuat).x;
+                        cb.y = startPos[idx].clone().applyQuaternion(finalQuat).y;
+                        cb.z = startPos[idx].clone().applyQuaternion(finalQuat).z;
+                        cb.mesh.position.set(cb.x, cb.y, cb.z);
+                    });
+                    resolve();
+                }
+            };
+            animate();
+        });
+    }
+}
+const cube = new RubikCube();
 
-            updateLayerState(action.layer, action.angle);
-            refreshCube();
+// ===================== 事件绑定 =====================
+// 颜色选择
+document.querySelectorAll(".color-block").forEach(el=>{
+    el.addEventListener("click",()=>{
+        document.querySelectorAll(".color-block").forEach(b=>b.classList.remove("active"));
+        el.classList.add("active");
+        selectedColor = el.dataset.val;
+    })
+})
 
-            resolve();
-        }, 250);
-    });
+// 画布点击上色
+renderer.domElement.addEventListener("pointerdown",(e)=>{
+    if(animating) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left)/rect.width)*2 - 1;
+    pointer.y = -((e.clientY - rect.top)/rect.height)*2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    if(intersects.length === 0) return;
+    const hit = intersects[0];
+    const mesh = hit.object;
+    const matIndex = hit.face.materialIndex;
+    hit.object.material[matIndex].color.setHex(COLOR_HEX[selectedColor]);
+})
+
+// 按钮控制
+const btnSolve = document.getElementById("solveBtn");
+const btnPlay = document.getElementById("playBtn");
+const btnStep = document.getElementById("stepBtn");
+const btnShuffle = document.getElementById("shuffleBtn");
+const btnReset = document.getElementById("resetBtn");
+const btnStandard = document.getElementById("standardBtn");
+
+function setBtnLock(lock){
+    [btnSolve,btnPlay,btnStep,btnShuffle,btnReset,btnStandard].forEach(b=>b.disabled=lock);
 }
 
-function getLayerCubies(layer) {
-    const cubies = Array.from(document.querySelectorAll(".cubie"));
+btnStandard.onclick = ()=>cube.setStandardCube();
+btnReset.onclick = ()=>cube.resetBlank();
 
-    switch (layer) {
-        case "top":
-            return cubies.filter((_, i) => i < 9);
-        case "bottom":
-            return cubies.filter((_, i) => i >= 18);
-        case "right":
-            return cubies.filter((_, i) => [2, 5, 8, 11, 14, 17, 20, 23, 26].includes(i));
-        case "left":
-            return cubies.filter((_, i) => [0, 3, 6, 9, 12, 15, 18, 21, 24].includes(i));
-        case "front":
-            return cubies.filter((_, i) => i >= 18);
-        case "back":
-            return cubies.filter((_, i) => i < 9);
-        default:
-            return [];
+btnShuffle.onclick = async ()=>{
+    if(animating) return;
+    animating = true;
+    setBtnLock(true);
+    const shuffleMoves = ["U","U'","D","D'","R","R'","L","L'","F","F'","B","B'"];
+    for(let i=0;i<22;i++){
+        const rand = shuffleMoves[Math.floor(Math.random()*shuffleMoves.length)];
+        await cube.doMove(rand);
+    }
+    solveSteps = [];
+    stepIndex = 0;
+    cube.printMsg("🔀魔方随机打乱完成");
+    animating = false;
+    setBtnLock(false);
+}
+
+btnSolve.onclick = ()=>{
+    try{
+        const code = cube.getKociembaString();
+        const result = kociemba.solve(code);
+        solveSteps = result.split(" ").filter(s=>s.trim());
+        stepIndex = 0;
+        cube.printMsg(`📝最优解法：${result}\n总步数：${solveSteps.length}`);
+    }catch(err){
+        cube.printMsg("❌色块不完整/魔方无效！\n先点击【一键生成标准完整魔方】");
     }
 }
 
-function updateLayerState(layer, angle) {
-    const tempLayer = [];
+btnStep.onclick = async ()=>{
+    if(animating || solveSteps.length===0 || stepIndex >= solveSteps.length) return;
+    animating = true;
+    setBtnLock(true);
+    await cube.doMove(solveSteps[stepIndex]);
+    stepIndex++;
+    cube.printMsg(`还原进度：${stepIndex}/${solveSteps.length}`);
+    animating = false;
+    setBtnLock(false);
+}
 
-    switch (layer) {
-        case "top":
-            for (let i = 0; i < 9; i++) {
-                tempLayer.push(cubeState[i]);
-            }
-
-            if (angle > 0) {
-                [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((to, from) => {
-                    cubeState[to] = tempLayer[[6, 3, 0, 7, 4, 1, 8, 5, 2][from]];
-                });
-            } else {
-                [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((to, from) => {
-                    cubeState[to] = tempLayer[[2, 5, 8, 1, 4, 7, 0, 3, 6][from]];
-                });
-            }
-            break;
-
-        case "bottom":
-            for (let i = 18; i < 27; i++) {
-                tempLayer.push(cubeState[i]);
-            }
-
-            if (angle > 0) {
-                [18, 19, 20, 21, 22, 23, 24, 25, 26].forEach((to, from) => {
-                    cubeState[to] = tempLayer[[2, 5, 8, 1, 4, 7, 0, 3, 6][from]];
-                });
-            } else {
-                [18, 19, 20, 21, 22, 23, 24, 25, 26].forEach((to, from) => {
-                    cubeState[to] = tempLayer[[6, 3, 0, 7, 4, 1, 8, 5, 2][from]];
-                });
-            }
-            break;
+btnPlay.onclick = async ()=>{
+    if(animating || solveSteps.length===0) return;
+    animating = true;
+    setBtnLock(true);
+    for(;stepIndex<solveSteps.length;stepIndex++){
+        await cube.doMove(solveSteps[stepIndex]);
+        cube.printMsg(`还原进度：${stepIndex+1}/${solveSteps.length}`);
     }
+    cube.printMsg(`🎉魔方还原完成！`);
+    animating = false;
+    setBtnLock(false);
 }
 
-function saveBaseTransform() {
-    document.querySelectorAll(".cubie").forEach(cubie => {
-        cubie.dataset.baseTransform = cubie.style.transform;
-    });
+// 渲染循环
+function renderLoop(){
+    requestAnimationFrame(renderLoop);
+    controls.update();
+    renderer.render(scene, camera);
 }
+renderLoop();
 
-createCube();
-initCubeState();
-setStandardCube();
-bindColorPicker();
-bindCubeClick();
-bindDrag();
-saveBaseTransform();
-rotateCubeWrapper();
+// 窗口自适应
+window.addEventListener("resize",()=>{
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+})
 </script>
-
 </body>
 </html>
