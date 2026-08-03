@@ -1,137 +1,236 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔方上色 & 控制系统</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        body {
-            background: #1a1a2e;
-            color: #ffffff;
-            padding: 20px;
-        }
-        .main-wrap {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 24px;
-            height: calc(100vh - 40px);
-        }
-        .left-panel {
-            background: #16213e;
-            padding: 20px;
-            border-radius: 12px;
-            height: 100%;
-            overflow-y: auto;
-        }
-        .left-panel h2 {
-            color: #4fc3f7;
-            margin-bottom: 16px;
-            font-size: 24px;
-        }
-        .color-area {
-            margin-bottom: 20px;
-        }
-        .color-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        .color-block {
-            width: 48px;
-            height: 48px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 3px solid transparent;
-        }
-        .color-block.active {
-            border-color: #fff;
-            transform: scale(1.08);
-        }
-        .w {background: #ffffff;}
-        .y {background: #ffd600;}
-        .r {background: #e53935;}
-        .o {background: #fb8c00;}
-        .b {background: #1e88e5;}
-        .g {background: #43a047;}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D魔方自动复原系统</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        button {
-            padding: 14px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: opacity 0.2s;
-        }
-        button:disabled {opacity:0.6;cursor:not-allowed;}
-        .blue-btn {background: #2196f3; color:white;}
-        .orange-btn {background: #fb8c00; color:white;}
-        .red-btn {background: #d32f2f; color:white;}
-        .gray-btn {background: #eeeeee; color:#222;}
-        .info-text {
-            background: #0f3460;
-            padding: 14px;
-            border-radius: 8px;
-            min-height: 100px;
-            line-height: 1.6;
-            margin-top:10px;
-        }
+    body {
+        background: #1a1a2e;
+        color: #fff;
+        padding: 18px;
+    }
 
-        /* 右侧魔方画布区域 */
-        .right-view {
-            background: #000000;
-            border-radius:12px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-        }
-        /* 2D魔方展开布局 */
-        .cube-2d-container{
-            display: grid;
-            grid-template-columns: repeat(4, auto);
-            gap:8px;
-        }
-        .face-wrap{
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-        }
-        .face-name{
-            margin-bottom:4px;font-size:12px;color:#aaa;
-        }
-        .face{
-            display:grid;
-            grid-template-columns: repeat(3,42px);
-            grid-template-rows: repeat(3,42px);
-            gap:3px;
-        }
-        .tile{
-            border-radius:4px;
-            cursor:pointer;
-            background:#222222;
-            transition:0.15s;
-        }
-        .tile:hover{filter:brightness(1.15);}
-    </style>
+    .main-wrap {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        height: calc(100vh - 36px);
+    }
+
+    .left-panel {
+        background: #16213e;
+        padding: 20px;
+        border-radius: 12px;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .left-panel h2 {
+        color: #4fc3f7;
+        margin-bottom: 16px;
+        font-size: 22px;
+    }
+
+    .color-area {
+        margin-bottom: 20px;
+    }
+
+    .color-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .color-block {
+        width: 48px;
+        height: 48px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 3px solid transparent;
+    }
+
+    .color-block.active {
+        border-color: #fff;
+        transform: scale(1.08);
+    }
+
+    .w { background: #ffffff; }
+    .y { background: #ffd600; }
+    .r { background: #e53935; }
+    .o { background: #fb8c00; }
+    .b { background: #1e88e5; }
+    .g { background: #43a047; }
+
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    button {
+        padding: 14px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: opacity 0.2s;
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .blue-btn { background: #2196f3; color: white; }
+    .orange-btn { background: #fb8c00; color: white; }
+    .red-btn { background: #d32f2f; color: white; }
+    .gray-btn { background: #eeeeee; color: #222; }
+
+    .info-text {
+        background: #0f3460;
+        padding: 14px;
+        border-radius: 8px;
+        min-height: 100px;
+        line-height: 1.6;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .tip {
+        font-size: 12px;
+        color: #b0b0b0;
+        margin-top: 8px;
+        line-height: 1.5;
+    }
+
+    /* 右侧3D魔方区域 */
+    .right-view {
+        background: #000;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .scene {
+        width: 300px;
+        height: 300px;
+        perspective: 800px;
+        cursor: grab;
+    }
+
+    .scene:active {
+        cursor: grabbing;
+    }
+
+    .cube-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.1s ease-out;
+    }
+
+    .cubie {
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        transform-style: preserve-3d;
+    }
+
+    .cubie .face {
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        border-radius: 8px;
+        border: 2px solid #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: rgba(0,0,0,0.35);
+        cursor: pointer;
+        transition: filter 0.15s;
+    }
+
+    .cubie .face:hover {
+        filter: brightness(1.15);
+    }
+
+    .cubie .face.U { background: #ffffff; }
+    .cubie .face.D { background: #ffd600; }
+    .cubie .face.R { background: #e53935; }
+    .cubie .face.L { background: #fb8c00; }
+    .cubie .face.F { background: #1e88e5; }
+    .cubie .face.B { background: #43a047; }
+    .cubie .face.X { background: #222222; }
+
+    .cubie .front  { transform: translateZ(48px); }
+    .cubie .back   { transform: rotateY(180deg) translateZ(48px); }
+    .cubie .right  { transform: rotateY(90deg) translateZ(48px); }
+    .cubie .left   { transform: rotateY(-90deg) translateZ(48px); }
+    .cubie .top    { transform: rotateX(90deg) translateZ(48px); }
+    .cubie .bottom { transform: rotateX(-90deg) translateZ(48px); }
+
+    /* 魔方位置：3x3 */
+    .cubie:nth-child(1)  { transform: translate3d(-100px, -100px, -100px); }
+    .cubie:nth-child(2)  { transform: translate3d(   0px, -100px, -100px); }
+    .cubie:nth-child(3)  { transform: translate3d( 100px, -100px, -100px); }
+
+    .cubie:nth-child(4)  { transform: translate3d(-100px,    0px, -100px); }
+    .cubie:nth-child(5)  { transform: translate3d(   0px,    0px, -100px); }
+    .cubie:nth-child(6)  { transform: translate3d( 100px,    0px, -100px); }
+
+    .cubie:nth-child(7)  { transform: translate3d(-100px,  100px, -100px); }
+    .cubie:nth-child(8)  { transform: translate3d(   0px,  100px, -100px); }
+    .cubie:nth-child(9)  { transform: translate3d( 100px,  100px, -100px); }
+
+    .cubie:nth-child(10) { transform: translate3d(-100px, -100px,    0px); }
+    .cubie:nth-child(11) { transform: translate3d(   0px, -100px,    0px); }
+    .cubie:nth-child(12) { transform: translate3d( 100px, -100px,    0px); }
+
+    .cubie:nth-child(13) { transform: translate3d(-100px,    0px,    0px); }
+    .cubie:nth-child(14) { transform: translate3d(   0px,    0px,    0px); }
+    .cubie:nth-child(15) { transform: translate3d( 100px,    0px,    0px); }
+
+    .cubie:nth-child(16) { transform: translate3d(-100px,  100px,    0px); }
+    .cubie:nth-child(17) { transform: translate3d(   0px,  100px,    0px); }
+    .cubie:nth-child(18) { transform: translate3d( 100px,  100px,    0px); }
+
+    .cubie:nth-child(19) { transform: translate3d(-100px, -100px,  100px); }
+    .cubie:nth-child(20) { transform: translate3d(   0px, -100px,  100px); }
+    .cubie:nth-child(21) { transform: translate3d( 100px, -100px,  100px); }
+
+    .cubie:nth-child(22) { transform: translate3d(-100px,    0px,  100px); }
+    .cubie:nth-child(23) { transform: translate3d(   0px,    0px,  100px); }
+    .cubie:nth-child(24) { transform: translate3d( 100px,    0px,  100px); }
+
+    .cubie:nth-child(25) { transform: translate3d(-100px,  100px,  100px); }
+    .cubie:nth-child(26) { transform: translate3d(   0px,  100px,  100px); }
+    .cubie:nth-child(27) { transform: translate3d( 100px,  100px,  100px); }
+</style>
 </head>
 <body>
+
 <div class="main-wrap">
     <div class="left-panel">
         <h2>魔方上色 & 控制</h2>
-        <p>选择颜色后点击魔方方块填充</p>
+        <p>选择颜色后点击立体魔方表面填充</p>
+
         <div class="color-area">
             <div class="color-row">
                 <div class="color-block w active" data-val="U"></div>
@@ -141,8 +240,9 @@
                 <div class="color-block b" data-val="F"></div>
                 <div class="color-block g" data-val="B"></div>
             </div>
-            <p style="font-size:13px;margin-top:8px;color:#ccc">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</p>
+            <div class="tip">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</div>
         </div>
+
         <div class="btn-group">
             <button class="blue-btn" id="solveBtn">一键自动复原魔方</button>
             <button class="blue-btn" id="playBtn">自动播放复原动画</button>
@@ -151,305 +251,444 @@
             <button class="red-btn" id="resetBtn">重置魔方空白</button>
             <button class="blue-btn" id="standardBtn">一键生成标准完整魔方</button>
         </div>
+
         <h3>还原步骤</h3>
-        <div class="info-text" id="msgBox">点击【一键生成标准完整魔方】初始化魔方</div>
+        <div class="info-text" id="msgBox">点击【一键生成标准完整魔方】开始操作</div>
+
+        <div class="tip">
+            鼠标拖拽可旋转视角；点击小方块表面可修改颜色。
+        </div>
     </div>
-    <!-- 右侧2D魔方视图 -->
+
     <div class="right-view">
-        <div class="cube-2d-container" id="cubeView"></div>
+        <div class="scene" id="scene">
+            <div class="cube-wrapper" id="cubeWrapper"></div>
+        </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/kociemba@2.0.6/dist/kociemba.min.js"></script>
 <script>
-// ===================== 全局配置 =====================
 const COLOR_MAP = {
-    U:"#ffffff",
-    D:"#ffd600",
-    R:"#e53935",
-    L:"#fb8c00",
-    F:"#1e88e5",
-    B:"#43a047"
+    U: "#ffffff",
+    D: "#ffd600",
+    R: "#e53935",
+    L: "#fb8c00",
+    F: "#1e88e5",
+    B: "#43a047",
+    X: "#222222"
 };
+
+const FACE_ORDER = ["U", "D", "L", "R", "F", "B"];
+
 let selectedColor = "U";
 let animating = false;
 let solveSteps = [];
 let stepIndex = 0;
 
-// 魔方初始数据 U D L R F B
-let cube = {
-    U:["U","U","U","U","U","U","U","U","U"],
-    D:["D","D","D","D","D","D","D","D","D"],
-    L:["L","L","L","L","L","L","L","L","L"],
-    R:["R","R","R","R","R","R","R","R","R"],
-    F:["F","F","F","F","F","F","F","F","F"],
-    B:["B","B","B","B","B","B","B","B","B"]
-};
+let cubeRotation = { x: -25, y: 45 };
+let isDragging = false;
+let startX = 0;
+let startY = 0;
 
-// ===================== 渲染魔方 =====================
-function renderCube(){
-    const wrap = document.getElementById("cubeView");
-    wrap.innerHTML = "";
-    const displayOrder = ["U","L","F","R","B","D"];
-    displayOrder.forEach(face=>{
-        const wrapDiv = document.createElement("div");
-        wrapDiv.className = "face-wrap";
+const cubeWrapper = document.getElementById("cubeWrapper");
+const scene = document.getElementById("scene");
 
-        const label = document.createElement("div");
-        label.className = "face-name";
-        label.innerText = face;
-        wrapDiv.appendChild(label);
+// 27个小方块的六个面颜色，X表示不可见/黑色
+let cubeState = [];
 
-        const faceDiv = document.createElement("div");
-        faceDiv.className = "face";
-        faceDiv.dataset.face = face;
-
-        cube[face].forEach((code,idx)=>{
-            const tile = document.createElement("div");
-            tile.className = "tile";
-            tile.dataset.face = face;
-            tile.dataset.idx = idx;
-            tile.style.background = code ? COLOR_MAP[code] : "#222222";
-            tile.onclick = ()=>{
-                if(animating) return;
-                cube[face][idx] = selectedColor;
-                renderCube();
-            }
-            faceDiv.appendChild(tile);
-        })
-        wrapDiv.appendChild(faceDiv);
-        wrap.appendChild(wrapDiv);
-    })
-}
-
-// ===================== 颜色选择器 =====================
-document.querySelectorAll(".color-block").forEach(el=>{
-    el.addEventListener("click",()=>{
-        document.querySelectorAll(".color-block").forEach(b=>b.classList.remove("active"));
-        el.classList.add("active");
-        selectedColor = el.dataset.val;
-    })
-})
-
-// ===================== 魔方旋转核心算法 =====================
-function rotateClockwise(faceArr){
-    return [faceArr[6],faceArr[3],faceArr[0],
-            faceArr[7],faceArr[4],faceArr[1],
-            faceArr[8],faceArr[5],faceArr[2]];
-}
-function rotateAntiClockwise(faceArr){
-    return [faceArr[2],faceArr[5],faceArr[8],
-            faceArr[1],faceArr[4],faceArr[7],
-            faceArr[0],faceArr[3],faceArr[6]];
-}
-
-// 执行转动指令 U,U2,U',D,D2,D',R,R2,R',L,L2,L',F,F2,F',B,B2,B'
-async function doMove(move){
-    return new Promise(resolve=>{
-        const type = move;
-        let times = 1;
-        let reverse = false;
-        if(type.includes("2")) times = 2;
-        if(type.includes("_") || type.includes("'")) reverse = true;
-        const face = type.replace("2","").replace("_","").replace("'","");
-
-        for(let t=0;t<times;t++){
-            if(!reverse){
-                cube[face] = rotateClockwise(cube[face]);
-                rotateAdjacent(face,true);
-            }else{
-                cube[face] = rotateAntiClockwise(cube[face]);
-                rotateAdjacent(face,false);
-            }
-        }
-        renderCube();
-        setTimeout(resolve,220);
-    })
-}
-
-// 相邻侧边联动（魔方旋转关键）
-function rotateAdjacent(face,clockwise){
-    let temp;
-    switch(face){
-        case "U":
-            temp = [...cube.F.slice(0,3)];
-            if(clockwise){
-                cube.F.splice(0,3,...cube.R.slice(0,3));
-                cube.R.splice(0,3,...cube.B.slice(0,3));
-                cube.B.splice(0,3,...cube.L.slice(0,3));
-                cube.L.splice(0,3,...temp);
-            }else{
-                cube.F.splice(0,3,...cube.L.slice(0,3));
-                cube.L.splice(0,3,...cube.B.slice(0,3));
-                cube.B.splice(0,3,...cube.R.slice(0,3));
-                cube.R.splice(0,3,...temp);
-            }
-            break;
-        case "D":
-            temp = [...cube.F.slice(6,9)];
-            if(clockwise){
-                cube.F.splice(6,3,...cube.L.slice(6,9));
-                cube.L.splice(6,3,...cube.B.slice(6,9));
-                cube.B.splice(6,3,...cube.R.slice(6,9));
-                cube.R.splice(6,3,...temp);
-            }else{
-                cube.F.splice(6,3,...cube.R.slice(6,9));
-                cube.R.splice(6,3,...cube.B.slice(6,9));
-                cube.B.splice(6,3,...cube.L.slice(6,9));
-                cube.L.splice(6,3,...temp);
-            }
-            break;
-        case "R":
-            temp = [cube.F[2],cube.F[5],cube.F[8]];
-            if(clockwise){
-                [cube.F[2],cube.F[5],cube.F[8]] = [cube.D[2],cube.D[5],cube.D[8]];
-                [cube.D[2],cube.D[5],cube.D[8]] = [cube.B[6],cube.B[3],cube.B[0]];
-                [cube.B[6],cube.B[3],cube.B[0]] = [cube.U[2],cube.U[5],cube.U[8]];
-                [cube.U[2],cube.U[5],cube.U[8]] = temp;
-            }else{
-                [cube.F[2],cube.F[5],cube.F[8]] = [cube.U[2],cube.U[5],cube.U[8]];
-                [cube.U[2],cube.U[5],cube.U[8]] = [cube.B[6],cube.B[3],cube.B[0]];
-                [cube.B[6],cube.B[3],cube.B[0]] = [cube.D[2],cube.D[5],cube.D[8]];
-                [cube.D[2],cube.D[5],cube.D[8]] = temp;
-            }
-            break;
-        case "L":
-            temp = [cube.F[0],cube.F[3],cube.F[6]];
-            if(clockwise){
-                [cube.F[0],cube.F[3],cube.F[6]] = [cube.U[0],cube.U[3],cube.U[6]];
-                [cube.U[0],cube.U[3],cube.U[6]] = [cube.B[8],cube.B[5],cube.B[2]];
-                [cube.B[8],cube.B[5],cube.B[2]] = [cube.D[0],cube.D[3],cube.D[6]];
-                [cube.D[0],cube.D[3],cube.D[6]] = temp;
-            }else{
-                [cube.F[0],cube.F[3],cube.F[6]] = [cube.D[0],cube.D[3],cube.D[6]];
-                [cube.D[0],cube.D[3],cube.D[6]] = [cube.B[8],cube.B[5],cube.B[2]];
-                [cube.B[8],cube.B[5],cube.B[2]] = [cube.U[0],cube.U[3],cube.U[6]];
-                [cube.U[0],cube.U[3],cube.U[6]] = temp;
-            }
-            break;
-        case "F":
-            temp = [cube.U[6],cube.U[7],cube.U[8]];
-            if(clockwise){
-                [cube.U[6],cube.U[7],cube.U[8]] = [cube.L[8],cube.L[5],cube.L[2]];
-                [cube.L[8],cube.L[5],cube.L[2]] = [cube.D[0],cube.D[1],cube.D[2]];
-                [cube.D[0],cube.D[1],cube.D[2]] = [cube.R[0],cube.R[3],cube.R[6]];
-                [cube.R[0],cube.R[3],cube.R[6]] = temp;
-            }else{
-                [cube.U[6],cube.U[7],cube.U[8]] = [cube.R[0],cube.R[3],cube.R[6]];
-                [cube.R[0],cube.R[3],cube.R[6]] = [cube.D[0],cube.D[1],cube.D[2]];
-                [cube.D[0],cube.D[1],cube.D[2]] = [cube.L[8],cube.L[5],cube.L[2]];
-                [cube.L[8],cube.L[5],cube.L[2]] = temp;
-            }
-            break;
-        case "B":
-            temp = [cube.U[0],cube.U[1],cube.U[2]];
-            if(clockwise){
-                [cube.U[0],cube.U[1],cube.U[2]] = [cube.R[8],cube.R[5],cube.R[2]];
-                [cube.R[8],cube.R[5],cube.R[2]] = [cube.D[8],cube.D[7],cube.D[6]];
-                [cube.D[8],cube.D[7],cube.D[6]] = [cube.L[0],cube.L[3],cube.L[6]];
-                [cube.L[0],cube.L[3],cube.L[6]] = temp;
-            }else{
-                [cube.U[0],cube.U[1],cube.U[2]] = [cube.L[0],cube.L[3],cube.L[6]];
-                [cube.L[0],cube.L[3],cube.L[6]] = [cube.D[8],cube.D[7],cube.D[6]];
-                [cube.D[8],cube.D[7],cube.D[6]] = [cube.R[8],cube.R[5],cube.R[2]];
-                [cube.R[8],cube.R[5],cube.R[2]] = temp;
-            }
-            break;
+function initCubeState() {
+    cubeState = [];
+    for (let i = 0; i < 27; i++) {
+        cubeState.push({
+            U: "X",
+            D: "X",
+            L: "X",
+            R: "X",
+            F: "X",
+            B: "X"
+        });
     }
 }
 
-// ===================== Kociemba编码转换 =====================
-function getCubeCode(){
-    let str = "";
-    const order = ["U","D","L","R","F","B"];
-    order.forEach(f=>{
-        cube[f].forEach(c=>{
-            if(!c) throw new Error("空白色块");
-            str += c;
-        })
-    })
-    return str;
+function createCubie() {
+    const cubie = document.createElement("div");
+    cubie.className = "cubie";
+
+    ["top", "bottom", "left", "right", "front", "back"].forEach(pos => {
+        const face = document.createElement("div");
+        face.className = `face ${pos}`;
+        face.dataset.pos = pos;
+        cubie.appendChild(face);
+    });
+
+    return cubie;
 }
 
-function setButtonState(disable){
-    document.querySelectorAll(".btn-group button").forEach(btn=>btn.disabled = disable);
+function createCube() {
+    cubeWrapper.innerHTML = "";
+    for (let i = 0; i < 27; i++) {
+        cubeWrapper.appendChild(createCubie());
+    }
 }
 
-// ===================== 按钮事件绑定 =====================
-// 标准魔方
-document.getElementById("standardBtn").onclick = ()=>{
-    cube = {
-        U:["U","U","U","U","U","U","U","U","U"],
-        D:["D","D","D","D","D","D","D","D","D"],
-        L:["L","L","L","L","L","L","L","L","L"],
-        R:["R","R","R","R","R","R","R","R","R"],
-        F:["F","F","F","F","F","F","F","F","F"],
-        B:["B","B","B","B","B","B","B","B","B"]
-    };
-    solveSteps = [];stepIndex=0;
-    renderCube();
+function refreshCube() {
+    const cubies = document.querySelectorAll(".cubie");
+
+    cubies.forEach((cubie, index) => {
+        const faces = cubie.querySelectorAll(".face");
+
+        faces.forEach(face => {
+            const pos = face.dataset.pos;
+            const code = cubeState[index][pos] || "X";
+
+            face.className = `face ${pos} ${code}`;
+            face.dataset.faceCode = code;
+        });
+    });
+}
+
+function setStandardCube() {
+    initCubeState();
+
+    const layout = [
+        { i: 0, U: "U", L: "L", B: "B" },
+        { i: 1, U: "U", B: "B" },
+        { i: 2, U: "U", R: "R", B: "B" },
+
+        { i: 3, L: "L", B: "B" },
+        { i: 4, B: "B" },
+        { i: 5, R: "R", B: "B" },
+
+        { i: 6, D: "D", L: "L", B: "B" },
+        { i: 7, D: "D", B: "B" },
+        { i: 8, D: "D", R: "R", B: "B" },
+
+        { i: 9, U: "U", L: "L" },
+        { i: 10, U: "U" },
+        { i: 11, U: "U", R: "R" },
+
+        { i: 12, L: "L" },
+        { i: 13, F: "F", U: "U", D: "D", L: "L", R: "R", B: "B" },
+        { i: 14, R: "R" },
+
+        { i: 15, D: "D", L: "L" },
+        { i: 16, D: "D" },
+        { i: 17, D: "D", R: "R" },
+
+        { i: 18, U: "U", L: "L", F: "F" },
+        { i: 19, U: "U", F: "F" },
+        { i: 20, U: "U", R: "R", F: "F" },
+
+        { i: 21, L: "L", F: "F" },
+        { i: 22, F: "F" },
+        { i: 23, R: "R", F: "F" },
+
+        { i: 24, D: "D", L: "L", F: "F" },
+        { i: 25, D: "D", F: "F" },
+        { i: 26, D: "D", R: "R", F: "F" }
+    ];
+
+    layout.forEach(item => {
+        Object.keys(item).forEach(key => {
+            if (key !== "i") {
+                cubeState[item.i][key] = item[key];
+            }
+        });
+    });
+
+    refreshCube();
     document.getElementById("msgBox").innerText = "✅ 标准完整魔方已生成";
 }
 
-// 重置空白
-document.getElementById("resetBtn").onclick = ()=>{
-    Object.keys(cube).forEach(k=>cube[k] = Array(9).fill(null));
-    solveSteps = [];stepIndex=0;
-    renderCube();
+function resetCube() {
+    initCubeState();
+    refreshCube();
+    solveSteps = [];
+    stepIndex = 0;
     document.getElementById("msgBox").innerText = "🗑️ 魔方已清空，请手动涂色";
 }
 
-// 求解
-document.getElementById("solveBtn").onclick = ()=>{
-    try{
+function bindColorPicker() {
+    document.querySelectorAll(".color-block").forEach(el => {
+        el.addEventListener("click", () => {
+            document.querySelectorAll(".color-block").forEach(b => b.classList.remove("active"));
+            el.classList.add("active");
+            selectedColor = el.dataset.val;
+        });
+    });
+}
+
+function bindCubeClick() {
+    document.querySelectorAll(".face").forEach(face => {
+        face.addEventListener("click", () => {
+            if (animating) return;
+
+            const cubie = face.parentElement;
+            const index = Array.from(cubeWrapper.children).indexOf(cubie);
+            const pos = face.dataset.pos;
+
+            cubeState[index][pos] = selectedColor;
+            refreshCube();
+        });
+    });
+}
+
+function rotateCubeWrapper() {
+    cubeWrapper.style.transform = `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`;
+}
+
+function bindDrag() {
+    scene.addEventListener("mousedown", e => {
+        if (animating) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+    });
+
+    window.addEventListener("mousemove", e => {
+        if (!isDragging) return;
+
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        cubeRotation.y += deltaX * 0.5;
+        cubeRotation.x -= deltaY * 0.5;
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        rotateCubeWrapper();
+    });
+
+    window.addEventListener("mouseup", () => {
+        isDragging = false;
+    });
+}
+
+function getCubeCode() {
+    let code = "";
+
+    const faceMaps = [
+        { face: "U", indices: [0, 1, 2, 9, 10, 11, 18, 19, 20], pos: "U" },
+        { face: "D", indices: [6, 7, 8, 15, 16, 17, 24, 25, 26], pos: "D" },
+        { face: "L", indices: [0, 3, 6, 9, 12, 15, 18, 21, 24], pos: "L" },
+        { face: "R", indices: [2, 5, 8, 11, 14, 17, 20, 23, 26], pos: "R" },
+        { face: "F", indices: [18, 19, 20, 21, 22, 23, 24, 25, 26], pos: "F" },
+        { face: "B", indices: [0, 1, 2, 3, 4, 5, 6, 7, 8], pos: "B" }
+    ];
+
+    faceMaps.forEach(({ face, indices, pos }) => {
+        indices.forEach(i => {
+            const c = cubeState[i][pos];
+            if (!c || c === "X") {
+                throw new Error("存在未填充色块");
+            }
+            code += c;
+        });
+    });
+
+    return code;
+}
+
+function setButtonState(disable) {
+    document.querySelectorAll(".btn-group button").forEach(btn => btn.disabled = disable);
+}
+
+document.getElementById("standardBtn").onclick = setStandardCube;
+document.getElementById("resetBtn").onclick = resetCube;
+
+document.getElementById("shuffleBtn").onclick = async () => {
+    if (animating) return;
+
+    animating = true;
+    setButtonState(true);
+
+    const moves = ["U", "U'", "D", "D'", "R", "R'", "L", "L'", "F", "F'", "B", "B'"];
+
+    for (let i = 0; i < 20; i++) {
+        const move = moves[Math.floor(Math.random() * moves.length)];
+        await doMove(move);
+    }
+
+    solveSteps = [];
+    stepIndex = 0;
+    animating = false;
+    setButtonState(false);
+
+    document.getElementById("msgBox").innerText = "🔀 魔方已随机打乱";
+};
+
+document.getElementById("solveBtn").onclick = () => {
+    try {
         const code = getCubeCode();
         const result = kociemba.solve(code);
-        solveSteps = result.split(" ").filter(x=>x.trim());
+        solveSteps = result.split(" ").filter(x => x.trim());
         stepIndex = 0;
-        document.getElementById("msgBox").innerText = `📝最优解法：${result}\n总步数：${solveSteps.length}`;
-    }catch(err){
-        document.getElementById("msgBox").innerText = "❌色块不完整/魔方无效！填满所有方块再求解";
-    }
-}
 
-// 单步还原
-document.getElementById("stepBtn").onclick = async ()=>{
-    if(animating || solveSteps.length===0 || stepIndex >= solveSteps.length) return;
-    animating = true; setButtonState(true);
+        document.getElementById("msgBox").innerText = `📝 最优解法：${result}\n总步数：${solveSteps.length}`;
+    } catch (err) {
+        document.getElementById("msgBox").innerText = "❌ 色块不完整或魔方无效！\n请先点击【一键生成标准完整魔方】，再打乱后求解。";
+    }
+};
+
+document.getElementById("stepBtn").onclick = async () => {
+    if (animating || solveSteps.length === 0 || stepIndex >= solveSteps.length) return;
+
+    animating = true;
+    setButtonState(true);
+
     await doMove(solveSteps[stepIndex]);
     stepIndex++;
+
     document.getElementById("msgBox").innerText = `进度：${stepIndex}/${solveSteps.length}`;
-    animating = false; setButtonState(false);
-}
 
-// 自动播放全部动画
-document.getElementById("playBtn").onclick = async ()=>{
-    if(animating || solveSteps.length===0) return;
-    animating = true; setButtonState(true);
-    for(;stepIndex < solveSteps.length;stepIndex++){
+    animating = false;
+    setButtonState(false);
+};
+
+document.getElementById("playBtn").onclick = async () => {
+    if (animating || solveSteps.length === 0) return;
+
+    animating = true;
+    setButtonState(true);
+
+    for (; stepIndex < solveSteps.length; stepIndex++) {
         await doMove(solveSteps[stepIndex]);
-        document.getElementById("msgBox").innerText = `还原进度：${stepIndex+1}/${solveSteps.length}`;
+        document.getElementById("msgBox").innerText = `还原进度：${stepIndex + 1}/${solveSteps.length}`;
     }
-    document.getElementById("msgBox").innerText += "\n🎉魔方还原完成！";
-    animating = false; setButtonState(false);
+
+    document.getElementById("msgBox").innerText += "\n🎉 魔方还原完成！";
+
+    animating = false;
+    setButtonState(false);
+};
+
+async function doMove(move) {
+    return new Promise(resolve => {
+        const map = {
+            U:  { axis: "y", layer: "top",    angle: 90,  reverse: false },
+            "U'": { axis: "y", layer: "top",    angle: -90, reverse: true  },
+            U2: { axis: "y", layer: "top",    angle: 180, reverse: false },
+            D:  { axis: "y", layer: "bottom", angle: -90, reverse: false },
+            "D'": { axis: "y", layer: "bottom", angle: 90,  reverse: true  },
+            D2: { axis: "y", layer: "bottom", angle: 180, reverse: false },
+            R:  { axis: "x", layer: "right",  angle: 90,  reverse: false },
+            "R'": { axis: "x", layer: "right",  angle: -90, reverse: true  },
+            R2: { axis: "x", layer: "right",  angle: 180, reverse: false },
+            L:  { axis: "x", layer: "left",   angle: -90, reverse: false },
+            "L'": { axis: "x", layer: "left",   angle: 90,  reverse: true  },
+            L2: { axis: "x", layer: "left",   angle: 180, reverse: false },
+            F:  { axis: "z", layer: "front",  angle: 90,  reverse: false },
+            "F'": { axis: "z", layer: "front",  angle: -90, reverse: true  },
+            F2: { axis: "z", layer: "front",  angle: 180, reverse: false },
+            B:  { axis: "z", layer: "back",   angle: -90, reverse: false },
+            "B'": { axis: "z", layer: "back",   angle: 90,  reverse: true  },
+            B2: { axis: "z", layer: "back",   angle: 180, reverse: false }
+        };
+
+        const action = map[move];
+
+        if (!action) {
+            resolve();
+            return;
+        }
+
+        const layer = getLayerCubies(action.layer);
+
+        layer.forEach(cubie => {
+            cubie.style.transition = "transform 0.25s ease-out";
+            cubie.style.transform += ` rotate${action.axis.toUpperCase()}(${action.angle}deg)`;
+        });
+
+        setTimeout(() => {
+            layer.forEach(cubie => {
+                cubie.style.transition = "";
+                cubie.style.transform = cubie.dataset.baseTransform;
+            });
+
+            updateLayerState(action.layer, action.angle);
+            refreshCube();
+
+            resolve();
+        }, 250);
+    });
 }
 
-// 随机打乱
-document.getElementById("shuffleBtn").onclick = async ()=>{
-    if(animating) return;
-    animating = true; setButtonState(true);
-    const moves = ["U","U_","D","D_","R","R_","L","L_","F","F_","B","B_"];
-    for(let i=0;i<22;i++){
-        const rnd = moves[Math.floor(Math.random()*moves.length)];
-        await doMove(rnd);
+function getLayerCubies(layer) {
+    const cubies = Array.from(document.querySelectorAll(".cubie"));
+
+    switch (layer) {
+        case "top":
+            return cubies.filter((_, i) => i < 9);
+        case "bottom":
+            return cubies.filter((_, i) => i >= 18);
+        case "right":
+            return cubies.filter((_, i) => [2, 5, 8, 11, 14, 17, 20, 23, 26].includes(i));
+        case "left":
+            return cubies.filter((_, i) => [0, 3, 6, 9, 12, 15, 18, 21, 24].includes(i));
+        case "front":
+            return cubies.filter((_, i) => i >= 18);
+        case "back":
+            return cubies.filter((_, i) => i < 9);
+        default:
+            return [];
     }
-    solveSteps = [];stepIndex=0;
-    document.getElementById("msgBox").innerText = "🔀魔方已随机打乱，点击【一键自动复原魔方】计算解法";
-    animating = false; setButtonState(false);
 }
 
-// 初始化渲染
-renderCube();
+function updateLayerState(layer, angle) {
+    const tempLayer = [];
+
+    switch (layer) {
+        case "top":
+            for (let i = 0; i < 9; i++) {
+                tempLayer.push(cubeState[i]);
+            }
+
+            if (angle > 0) {
+                [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((to, from) => {
+                    cubeState[to] = tempLayer[[6, 3, 0, 7, 4, 1, 8, 5, 2][from]];
+                });
+            } else {
+                [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((to, from) => {
+                    cubeState[to] = tempLayer[[2, 5, 8, 1, 4, 7, 0, 3, 6][from]];
+                });
+            }
+            break;
+
+        case "bottom":
+            for (let i = 18; i < 27; i++) {
+                tempLayer.push(cubeState[i]);
+            }
+
+            if (angle > 0) {
+                [18, 19, 20, 21, 22, 23, 24, 25, 26].forEach((to, from) => {
+                    cubeState[to] = tempLayer[[2, 5, 8, 1, 4, 7, 0, 3, 6][from]];
+                });
+            } else {
+                [18, 19, 20, 21, 22, 23, 24, 25, 26].forEach((to, from) => {
+                    cubeState[to] = tempLayer[[6, 3, 0, 7, 4, 1, 8, 5, 2][from]];
+                });
+            }
+            break;
+    }
+}
+
+function saveBaseTransform() {
+    document.querySelectorAll(".cubie").forEach(cubie => {
+        cubie.dataset.baseTransform = cubie.style.transform;
+    });
+}
+
+createCube();
+initCubeState();
+setStandardCube();
+bindColorPicker();
+bindCubeClick();
+bindDrag();
+saveBaseTransform();
+rotateCubeWrapper();
 </script>
+
 </body>
 </html>
