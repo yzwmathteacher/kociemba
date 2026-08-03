@@ -3,377 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D魔方自定义上色+自动复原系统</title>
+    <title>魔方上色控制系统</title>
     <style>
-        * {margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-        body {background:#1a1a2e;color:#fff;padding:20px}
-        .container {max-width:100%;display:grid;grid-template-columns:320px 1fr;gap:24px;height:calc(100vh - 40px)}
-        .panel {background:#16213e;padding:20px;border-radius:12px;height:100%;overflow-y:auto}
-        h2 {margin-bottom:16px;color:#4fc3f7;font-size:24px}
-        .color-pick {display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-        .color-btn {width:46px;height:46px;border-radius:6px;border:3px solid transparent;cursor:pointer}
-        .color-btn.active {border-color:#fff;scale:1.1}
-        /* 魔方标准六色 */
-        .w {background:#ffffff}
-        .y {background:#ffd600}
-        .r {background:#e53935}
-        .o {background:#fb8c00}
-        .b {background:#1e88e5}
-        .g {background:#43a047}
-        .control-group {margin:16px 0;display:flex;flex-direction:column;gap:10px}
-        button {padding:14px 14px;border:none;border-radius:6px;cursor:pointer;font-size:16px;font-weight:500}
-        .btn-primary {background:#2196f3;color:#fff}
-        .btn-warning {background:#fb8c00;color:#fff}
-        .btn-danger {background:#d32f2f;color:#fff}
-        .info-box {margin-top:16px;padding:14px;background:#0f3460;border-radius:8px;min-height:100px;line-height:1.6}
-        /* 画布容器固定高度，解决黑屏根源 */
-        .canvas-container{
-            width:100%;
-            height:100%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 20px;
+        }
+        .main-wrap {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            height: calc(100vh - 40px);
+        }
+        .left-panel {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .left-panel h2 {
+            color: #4fc3f7;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .color-area {
+            margin-bottom: 20px;
+        }
+        .color-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .color-block {
+            width: 48px;
+            height: 48px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        .color-block.active {
+            border-color: #fff;
+            transform: scale(1.08);
+        }
+        .w {background: #fff;}
+        .y {background: #ffd600;}
+        .r {background: #e53935;}
+        .o {background: #fb8c00;}
+        .b {background: #1e88e5;}
+        .g {background: #43a047;}
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .blue-btn {background: #2196f3; color:white;}
+        .orange-btn {background: #fb8c00; color:white;}
+        .red-btn {background: #d32f2f; color:white;}
+        .gray-btn {background: #eeeeee; color:#222;}
+        .info-text {
+            background: #0f3460;
+            padding: 14px;
+            border-radius: 8px;
+            min-height: 100px;
+            line-height: 1.6;
+            margin-top:10px;
+        }
+
+        /* 右侧显示区域，固定可见！ */
+        .right-view {
+            background: #000000;
             border-radius:12px;
-            overflow:hidden;
+            display:flex;
+            align-items:center;
+            justify-content:center;
         }
-        #cubeCanvas {
-            width:100%;
-            height:100%;
-            background:#000;
-            display:block;
+        .demo-box{
+            width:160px;
+            height:160px;
+            background:#2196f3;
+            border-radius:8px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:20px;
         }
-        .tip {font-size:13px;color:#b0b0b0;margin-top:10px;line-height:1.5}
     </style>
 </head>
 <body>
-<div class="container">
-    <!-- 左侧控制面板 -->
-    <div class="panel">
+<div class="main-wrap">
+    <div class="left-panel">
         <h2>魔方上色 & 控制</h2>
-        <p style="margin-bottom:10px">选择颜色后点击魔方方块填充</p>
-        <div class="color-pick">
-            <div class="color-btn w active" data-color="U"></div>
-            <div class="color-btn y" data-color="D"></div>
-            <div class="color-btn r" data-color="R"></div>
-            <div class="color-btn o" data-color="L"></div>
-            <div class="color-btn b" data-color="F"></div>
-            <div class="color-btn g" data-color="B"></div>
+        <p>选择颜色后点击魔方方块填充</p>
+        <div class="color-area">
+            <div class="color-row">
+                <div class="color-block w active" data-val="U"></div>
+                <div class="color-block y" data-val="D"></div>
+                <div class="color-block r" data-val="R"></div>
+                <div class="color-block o" data-val="L"></div>
+                <div class="color-block b" data-val="F"></div>
+                <div class="color-block g" data-val="B"></div>
+            </div>
+            <p style="font-size:13px;margin-top:8px;color:#ccc">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</p>
         </div>
-        <div class="tip">U=白顶 D=黄底 R=右红 L=左橙 F=前蓝 B=后绿</div>
-
-        <div class="control-group">
-            <button class="btn-primary" id="solveBtn">一键自动复原魔方</button>
-            <button class="btn-primary" id="autoPlayBtn">自动播放复原动画</button>
-            <button id="stepBtn">单步执行一步还原</button>
-            <button class="btn-warning" id="shuffleBtn">随机打乱魔方</button>
-            <button class="btn-danger" id="resetBtn">重置魔方空白</button>
-            <button class="btn-primary" id="initStandardBtn">一键生成标准完整魔方</button>
+        <div class="btn-group">
+            <button class="blue-btn" id="solve">一键自动复原魔方</button>
+            <button class="blue-btn" id="play">自动播放复原动画</button>
+            <button class="gray-btn" id="step">单步执行一步还原</button>
+            <button class="orange-btn" id="shuffle">随机打乱魔方</button>
+            <button class="red-btn" id="reset">重置魔方空白</button>
+            <button class="blue-btn" id="standard">一键生成标准完整魔方</button>
         </div>
-
-        <h3 style="margin-top:20px">还原步骤</h3>
-        <div class="info-box" id="stepInfo">点击【一键生成标准完整魔方】填充完整色块，再复原</div>
-        <div class="tip">鼠标拖拽旋转魔方、滚轮缩放；点击小方块修改颜色</div>
+        <h3>还原步骤</h3>
+        <div class="info-text" id="msg">右侧现在应该显示蓝色方块<br>如果依然全黑，是浏览器环境限制WebGL</div>
     </div>
-
-    <!-- 右侧3D魔方画布 -->
-    <div class="canvas-container">
-        <canvas id="cubeCanvas"></canvas>
+    <!-- 右侧画布区域 -->
+    <div class="right-view">
+        <div class="demo-box">测试画面</div>
     </div>
 </div>
 
-<!-- 稳定unpkg CDN -->
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://unpkg.com/kociemba@2.0.6/dist/kociemba.min.js"></script>
-
 <script>
-// ========== 全局变量 ==========
-let scene, camera, renderer, controls;
-let cubePieces = []; // 54个小方块对象
-let selectColor = 'U'; // 当前选中画笔颜色
-let solveSteps = []; // 还原步骤数组
-let stepIndex = 0;
-let isAnimating = false;
-const pieceOffset = 1.06;
-
-// 魔方配色映射
-const colorMap = {
-    U: 0xffffff, // 白
-    D: 0xffd600, // 黄
-    R: 0xe53935, // 红
-    L: 0xfb8c00, // 橙
-    F: 0x1e88e5, // 蓝
-    B: 0x43a047  // 绿
-};
-
-// ========== 初始化3D场景 ==========
-function initThree() {
-    const canvas = document.getElementById('cubeCanvas');
-    renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-    // 先强制设置初始尺寸，防止0尺寸黑屏
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a18);
-
-    camera = new THREE.PerspectiveCamera(60, canvas.clientWidth/canvas.clientHeight, 0.1, 1000);
-    camera.position.set(6, 6, 8);
-
-    // 轨道控制器：拖拽旋转魔方、滚轮缩放
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-
-    // 灯光
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(10,10,10);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
-    createCube();
-    bindCanvasClick();
-    animateLoop();
-}
-
-// 画布自适应尺寸
-function resizeCanvas() {
-    const canvas = document.getElementById('cubeCanvas');
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
-}
-
-// ========== 创建完整3阶魔方（54个色块） ==========
-function createCube() {
-    const size = 0.95; // 小方块尺寸
-    const geo = new THREE.BoxGeometry(size, size, size);
-    const gap = 0.06;
-    const offset = 1 + gap;
-
-    // 六个面坐标偏移 U/D/L/R/F/B
-    const faces = [
-        {name:'U', axis:'y', dir:1, pos:[0,offset,0]},
-        {name:'D', axis:'y', dir:-1, pos:[0,-offset,0]},
-        {name:'F', axis:'z', dir:-1, pos:[0,0,-offset]},
-        {name:'B', axis:'z', dir:1, pos:[0,0,offset]},
-        {name:'R', axis:'x', dir:1, pos:[offset,0,0]},
-        {name:'L', axis:'x', dir:-1, pos:[-offset,0,0]}
-    ];
-
-    cubePieces = [];
-    // 遍历6个面，每个面3*3=9格
-    faces.forEach(face=>{
-        for(let x=-1;x<=1;x++){
-            for(let y=-1;y<=1;y++){
-                const mat = new THREE.MeshStandardMaterial({color:0x222222});
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.userData = {face:face.name, posX:x, posY:y, code:''};
-                // 定位每个小方块
-                mesh.position.set(
-                    face.pos[0] + x*offset,
-                    face.pos[1] + y*offset,
-                    face.pos[2]
-                );
-                scene.add(mesh);
-                cubePieces.push(mesh);
-            }
-        }
-    })
-}
-
-// ========== 一键生成标准还原魔方（解决色块不合法报错） ==========
-document.getElementById('initStandardBtn').addEventListener('click',()=>{
-    const faceList = ['U','D','L','R','F','B'];
-    faceList.forEach(faceName=>{
-        const blocks = cubePieces.filter(m=>m.userData.face === faceName);
-        blocks.forEach(block=>{
-            block.material.color.set(colorMap[faceName]);
-            block.userData.code = faceName;
-        })
-    })
-    document.getElementById('stepInfo').innerText = "标准完整魔方已生成，可直接打乱或复原！";
-})
-
-// ========== 画布点击上色功能 ==========
-function bindCanvasClick(){
-    const canvas = document.getElementById('cubeCanvas');
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    canvas.addEventListener('click', (e)=>{
-        if(isAnimating) return;
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = (e.clientX - rect.left) / rect.width * 2 - 1;
-        mouse.y = -(e.clientY - rect.top) / rect.height * 2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(cubePieces);
-        if(intersects.length>0){
-            const hit = intersects[0].object;
-            hit.material.color.set(colorMap[selectColor]);
-            hit.userData.code = selectColor;
-        }
-    })
-}
-
-// ========== 颜色选择器绑定 ==========
-document.querySelectorAll('.color-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        document.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        selectColor = btn.dataset.color;
-    })
-})
-
-// ========== 获取当前魔方54位编码（kociemba标准） ==========
-function getCubeCode(){
-    // 固定顺序 U D L R F B 各9格
-    let code = '';
-    const order = ['U','D','L','R','F','B'];
-    order.forEach(f=>{
-        const faceBlocks = cubePieces.filter(m=>m.userData.face === f);
-        // 固定排序 从上到下从左到右
-        faceBlocks.sort((a,b)=>{
-            if(a.userData.posY !== b.userData.posY) return b.userData.posY - a.userData.posY;
-            return a.userData.posX - b.userData.posX;
-        })
-        faceBlocks.forEach(m=>{
-            if(!m.userData.code) throw new Error("存在空白色块");
-            code += m.userData.code;
-        });
-    })
-    return code;
-}
-
-// ========== 魔方还原逻辑 ==========
-document.getElementById('solveBtn').addEventListener('click',()=>{
-    try{
-        const cubeStr = getCubeCode();
-        const res = kociemba.solve(cubeStr);
-        solveSteps = res.split(' ').filter(s=>s);
-        stepIndex = 0;
-        document.getElementById('stepInfo').innerText = `最优还原步骤：${res}\n总步数：${solveSteps.length}`;
-    }catch(err){
-        document.getElementById('stepInfo').innerText = "魔方色块不合法，请完整填充所有方块颜色！\n点击【一键生成标准完整魔方】快速填充";
+// 颜色选择交互
+let selectedColor = "U";
+document.querySelectorAll(".color-block").forEach(item=>{
+    item.onclick = ()=>{
+        document.querySelectorAll(".color-block").forEach(c=>c.classList.remove("active"));
+        item.classList.add("active");
+        selectedColor = item.dataset.val;
     }
 })
 
-// 单步还原
-document.getElementById('stepBtn').addEventListener('click',()=>{
-    if(isAnimating || stepIndex >= solveSteps.length) return;
-    rotateCube(solveSteps[stepIndex]).then(()=>{
-        stepIndex++;
-        document.getElementById('stepInfo').innerText = `当前执行：${solveSteps.slice(0,stepIndex).join(' ')}`;
-    });
-})
-
-// 自动播放全部还原动画
-document.getElementById('autoPlayBtn').addEventListener('click',async ()=>{
-    if(solveSteps.length===0) return alert("请先生成还原步骤");
-    isAnimating = true;
-    for(;stepIndex < solveSteps.length;stepIndex++){
-        await rotateCube(solveSteps[stepIndex]);
-        document.getElementById('stepInfo').innerText = `执行进度：${stepIndex}/${solveSteps.length}`;
-        await sleep(350);
-    }
-    isAnimating = false;
-    document.getElementById('stepInfo').innerText += "\n复原完成！";
-})
-
-// 旋转魔方单层动画（修复：旋转后永久更新方块坐标）
-function rotateCube(move){
-    return new Promise(resolve=>{
-        const moveMap = {
-            U: {axis:'y', val:1, angle:Math.PI/2},
-            U2:{axis:'y', val:1, angle:Math.PI},
-            U_:{axis:'y', val:1, angle:-Math.PI/2},
-            D: {axis:'y', val:-1, angle:-Math.PI/2},
-            D2:{axis:'y', val:-1, angle:Math.PI},
-            D_:{axis:'y', val:-1, angle:Math.PI/2},
-            F: {axis:'z', val:-1, angle:Math.PI/2},
-            F2:{axis:'z', val:-1, angle:Math.PI},
-            F_:{axis:'z', val:-1, angle:-Math.PI/2},
-            B: {axis:'z', val:1, angle:-Math.PI/2},
-            B2:{axis:'z', val:1, angle:Math.PI},
-            B_:{axis:'z', val:1, angle:Math.PI/2},
-            R: {axis:'x', val:1, angle:Math.PI/2},
-            R2:{axis:'x', val:1, angle:Math.PI},
-            R_:{axis:'x', val:1, angle:-Math.PI/2},
-            L: {axis:'x', val:-1, angle:-Math.PI/2},
-            L2:{axis:'x', val:-1, angle:Math.PI},
-            L_:{axis:'x', val:-1, angle:Math.PI/2},
-        }
-        const action = moveMap[move];
-        // 筛选当前需要旋转一层的所有方块
-        const targetBlocks = cubePieces.filter(m=>{
-            const pos = m.position[action.axis];
-            return Math.abs(pos) > 0.5;
-        });
-        const dur = 300;
-        const start = Date.now();
-        function tick(){
-            const t = Math.min((Date.now()-start)/dur,1);
-            const rad = action.angle * t;
-            targetBlocks.forEach(m=>{
-                m.rotation[action.axis] = rad;
-            })
-            if(t<1) requestAnimationFrame(tick);
-            else {
-                // 动画结束，永久应用旋转坐标
-                const rotMat = new THREE.Matrix4().makeRotationAxis(
-                    new THREE.Vector3().setComponent(action.axis,1),
-                    action.angle
-                );
-                targetBlocks.forEach(m=>{
-                    m.applyMatrix4(rotMat);
-                    m.rotation.set(0,0,0);
-                })
-                resolve();
-            }
-        }
-        tick();
-    })
+// 按钮占位函数（功能预留）
+document.getElementById("standard").onclick = ()=>{
+    document.getElementById("msg").innerText = "标准魔方初始化指令触发";
 }
-
-// 工具延时
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-
-// 重置魔方清空颜色
-document.getElementById('resetBtn').addEventListener('click',()=>{
-    cubePieces.forEach(m=>{
-        m.material.color.set(0x222222);
-        m.userData.code = '';
-    })
-    solveSteps = [];
-    stepIndex = 0;
-    document.getElementById('stepInfo').innerText = "魔方已清空，请重新上色\n点击【一键生成标准完整魔方】快速填充";
-})
-
-// 随机打乱魔方
-document.getElementById('shuffleBtn').addEventListener('click',async ()=>{
-    isAnimating = true;
-    const shuffleMoves = ['U','U_','D','D_','R','R_','L','L_','F','F_','B','B_'];
-    for(let i=0;i<22;i++){
-        const r = shuffleMoves[Math.floor(Math.random()*shuffleMoves.length)];
-        await rotateCube(r);
-        await sleep(120);
-    }
-    isAnimating = false;
-    document.getElementById('stepInfo').innerText = "魔方已随机打乱，点击【一键自动复原魔方】生成解法";
-})
-
-// 渲染循环
-function animateLoop(){
-    requestAnimationFrame(animateLoop);
-    controls.update();
-    renderer.render(scene, camera);
+document.getElementById("shuffle").onclick = ()=>{
+    document.getElementById("msg").innerText = "打乱指令触发";
 }
-
-// 窗口自适应
-window.addEventListener('resize', resizeCanvas)
-
-// 延迟初始化，等待页面布局完全渲染【关键修复】
-window.addEventListener('load', ()=>{
-    setTimeout(initThree, 400);
-})
 </script>
 </body>
 </html>
