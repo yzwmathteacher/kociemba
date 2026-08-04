@@ -1,308 +1,487 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>3D魔方自定义涂色 & 自动复原系统</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D魔方控制系统</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, sans-serif;}
-body{background:#161620;color:#fff;height:100vh;display:flex;overflow:hidden;}
-#cubeWrap{
-    width:65%;
-    height:100%;
-    position:relative;
-}
-#cubeCanvas{
-    width:100%;height:100%;display:block;
-}
-#panel{
-    width:35%;
-    padding:32px;
-    background:#20202e;
-    overflow-y:auto;
-    z-index:999;
-    position:relative;
-}
-h2{margin-bottom:24px;color:#60a5fa;font-size:22px;}
-.btn-group{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-bottom:28px;
-}
-button{
-    padding:13px 8px;
-    border:none;border-radius:9px;
-    font-size:15px;cursor:pointer;
-    background:#2563eb;color:#fff;
-    transition:0.2s ease;
-    pointer-events:auto !important;
-}
-button:hover{background:#3b82f6;}
-button.danger{background:#b93434;}
-button.danger:hover{background:#dc3838;}
-button:disabled{opacity:0.5;cursor:not-allowed;}
-.info{
-    background:#2b2b3f;
-    padding:16px;border-radius:9px;margin:22px 0;
-    line-height:1.7;font-size:14px;color:#cbd5e1;
-}
-.color-select{
-    display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;
-}
-.color-item{
-    width:38px;height:38px;border-radius:7px;
-    border:3px solid transparent;cursor:pointer;
-}
-.color-item.active{border-color:#fff;transform:scale(1.08);}
-#status{margin-top:14px;color:#94a3b8;font-size:15px;}
-.formula-box{
-    margin-top:18px;
-    background:#2b2b3f;
-    padding:12px;border-radius:8px;
-    word-break:break-all;
-    min-height:44px;
-}
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+        background: #1a1a2e;
+        color: #fff;
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* 左侧魔方区域 */
+    #cube-area {
+        width: 65%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        position: relative;
+    }
+
+    .scene {
+        width: 280px;
+        height: 280px;
+        perspective: 600px;
+        cursor: grab;
+    }
+
+    .scene:active {
+        cursor: grabbing;
+    }
+
+    .cube {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-25deg) rotateY(45deg);
+        transition: transform 0.05s ease-out;
+    }
+
+    .cubie {
+        position: absolute;
+        width: 90px;
+        height: 90px;
+        transform-style: preserve-3d;
+    }
+
+    .cubie .face {
+        position: absolute;
+        width: 90px;
+        height: 90px;
+        border: 2px solid #111;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: rgba(0,0,0,0.35);
+        cursor: pointer;
+        transition: filter 0.15s;
+        backface-visibility: hidden;
+    }
+
+    .cubie .face:hover {
+        filter: brightness(1.15);
+    }
+
+    .cubie .front  { transform: translateZ(45px); }
+    .cubie .back   { transform: rotateY(180deg) translateZ(45px); }
+    .cubie .right  { transform: rotateY(90deg) translateZ(45px); }
+    .cubie .left   { transform: rotateY(-90deg) translateZ(45px); }
+    .cubie .top    { transform: rotateX(90deg) translateZ(45px); }
+    .cubie .bottom { transform: rotateX(-90deg) translateZ(45px); }
+
+    .cubie:nth-child(1)  { transform: translate3d(-95px, -95px, -95px); }
+    .cubie:nth-child(2)  { transform: translate3d(   0px, -95px, -95px); }
+    .cubie:nth-child(3)  { transform: translate3d( 95px, -95px, -95px); }
+
+    .cubie:nth-child(4)  { transform: translate3d(-95px,    0px, -95px); }
+    .cubie:nth-child(5)  { transform: translate3d(   0px,    0px, -95px); }
+    .cubie:nth-child(6)  { transform: translate3d( 95px,    0px, -95px); }
+
+    .cubie:nth-child(7)  { transform: translate3d(-95px,  95px, -95px); }
+    .cubie:nth-child(8)  { transform: translate3d(   0px,  95px, -95px); }
+    .cubie:nth-child(9)  { transform: translate3d( 95px,  95px, -95px); }
+
+    .cubie:nth-child(10) { transform: translate3d(-95px, -95px,    0px); }
+    .cubie:nth-child(11) { transform: translate3d(   0px, -95px,    0px); }
+    .cubie:nth-child(12) { transform: translate3d( 95px, -95px,    0px); }
+
+    .cubie:nth-child(13) { transform: translate3d(-95px,    0px,    0px); }
+    .cubie:nth-child(14) { transform: translate3d(   0px,    0px,    0px); }
+    .cubie:nth-child(15) { transform: translate3d( 95px,    0px,    0px); }
+
+    .cubie:nth-child(16) { transform: translate3d(-95px,  95px,    0px); }
+    .cubie:nth-child(17) { transform: translate3d(   0px,  95px,    0px); }
+    .cubie:nth-child(18) { transform: translate3d( 95px,  95px,    0px); }
+
+    .cubie:nth-child(19) { transform: translate3d(-95px, -95px,  95px); }
+    .cubie:nth-child(20) { transform: translate3d(   0px, -95px,  95px); }
+    .cubie:nth-child(21) { transform: translate3d( 95px, -95px,  95px); }
+
+    .cubie:nth-child(22) { transform: translate3d(-95px,    0px,  95px); }
+    .cubie:nth-child(23) { transform: translate3d(   0px,    0px,  95px); }
+    .cubie:nth-child(24) { transform: translate3d( 95px,    0px,  95px); }
+
+    .cubie:nth-child(25) { transform: translate3d(-95px,  95px,  95px); }
+    .cubie:nth-child(26) { transform: translate3d(   0px,  95px,  95px); }
+    .cubie:nth-child(27) { transform: translate3d( 95px,  95px,  95px); }
+
+    /* 右侧控制面板 */
+    #panel {
+        width: 35%;
+        padding: 24px;
+        background: #20202e;
+        overflow-y: auto;
+        position: relative;
+        z-index: 10;
+    }
+
+    #panel h2 {
+        margin-bottom: 20px;
+        color: #60a5fa;
+        font-size: 20px;
+    }
+
+    .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+    button {
+        padding: 12px 8px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        background: #2563eb;
+        color: #fff;
+        transition: 0.2s;
+        pointer-events: auto;
+    }
+
+    button:hover {
+        background: #3b82f6;
+    }
+
+    button.danger {
+        background: #b93434;
+    }
+
+    button.danger:hover {
+        background: #dc3838;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .info {
+        background: #2b2b3f;
+        padding: 14px;
+        border-radius: 8px;
+        margin: 18px 0;
+        line-height: 1.6;
+        font-size: 13px;
+        color: #cbd5e1;
+    }
+
+    .color-select {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 14px 0;
+    }
+
+    .color-item {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 3px solid transparent;
+        cursor: pointer;
+    }
+
+    .color-item.active {
+        border-color: #fff;
+        transform: scale(1.08);
+    }
+
+    #status {
+        margin-top: 12px;
+        color: #94a3b8;
+        font-size: 14px;
+    }
+
+    .formula-box {
+        margin-top: 16px;
+        background: #2b2b3f;
+        padding: 12px;
+        border-radius: 8px;
+        word-break: break-all;
+        min-height: 44px;
+        font-size: 13px;
+    }
 </style>
 </head>
 <body>
-<div id="cubeWrap">
-    <canvas id="cubeCanvas"></canvas>
+
+<div id="cube-area">
+    <div class="scene" id="scene">
+        <div class="cube" id="cube"></div>
+    </div>
 </div>
+
 <div id="panel">
     <h2>魔方控制面板</h2>
+
     <div class="btn-group">
         <button id="btnScramble">随机打乱魔方</button>
         <button id="btnReset">重置魔方</button>
         <button id="btnSolve">自动复原魔方</button>
         <button class="danger" id="btnStop">停止动画</button>
     </div>
+
     <div class="info">
         <p>🖱️ 鼠标拖拽：旋转视角</p>
         <p>🔍 滚轮：缩放画面</p>
         <p>🎨 选择颜色后点击魔方小块涂色</p>
         <p>✅ 涂色完成后点击【自动复原】</p>
     </div>
+
     <div>
         <p>选择涂色颜色：</p>
         <div class="color-select">
-            <div class="color-item active" data-letter="W" data-color="#ffffff" style="background:#fff"></div>
-            <div class="color-item" data-letter="R" data-color="#ff3333" style="background:#ff3333"></div>
-            <div class="color-item" data-letter="G" data-color="#00bb44" style="background:#00bb44"></div>
-            <div class="color-item" data-letter="B" data-color="#2277ff" style="background:#2277ff"></div>
-            <div class="color-item" data-letter="O" data-color="#ffaa22" style="background:#ffaa22"></div>
-            <div class="color-item" data-letter="Y" data-color="#ffff22" style="background:#ffff22"></div>
+            <div class="color-item active" data-color="W" style="background:#ffffff"></div>
+            <div class="color-item" data-color="R" style="background:#ff3333"></div>
+            <div class="color-item" data-color="G" style="background:#00bb44"></div>
+            <div class="color-item" data-color="B" style="background:#2277ff"></div>
+            <div class="color-item" data-color="O" style="background:#ffaa22"></div>
+            <div class="color-item" data-color="Y" style="background:#ffff22"></div>
         </div>
     </div>
+
     <div id="status">当前状态：初始复原状态</div>
     <div class="formula-box">复原公式：<span id="formulaText">无</span></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-<!-- Kociemba 魔方求解器 -->
-<script src="https://cdn.jsdelivr.net/npm/kociemba@2.1.2/kociemba.min.js"></script>
-
 <script>
-let scene, camera, renderer, controls, raycaster, mouse;
-let cubePieces = [];
-let selectedColorHex = "#ffffff";
-let selectedLetter = "W";
-let animating = false;
-let animationQueue = [];
-const CUBE_SIZE = 1.0;
-const GAP = 0.035;
+    const COLOR_MAP = {
+        W: "#ffffff",
+        R: "#ff3333",
+        G: "#00bb44",
+        B: "#2277ff",
+        O: "#ffaa22",
+        Y: "#ffff22",
+        X: "#222222"
+    };
 
-// 魔方字母映射颜色
-const LETTER_COLOR = {
-    W:0xffffff,
-    R:0xff3333,
-    G:0x00bb44,
-    B:0x2277ff,
-    O:0xffaa22,
-    Y:0xffff22
-};
-// 标准复原字符串
-let cubeStateStr = "WWWWWWWWWGGGRRRBBBOOOYYYYYYY";
+    let selectedColor = "W";
+    let animating = false;
+    let cubeRotation = { x: -25, y: 45 };
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
 
-// 初始化场景
-function init(){
-    const canvas = document.getElementById("cubeCanvas");
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x12121c);
-    camera = new THREE.PerspectiveCamera(54, 0.65/0.35, 0.1, 200);
-    camera.position.set(4.2, 3.2, 4.2);
+    const scene = document.getElementById("scene");
+    const cube = document.getElementById("cube");
+    const statusText = document.getElementById("status");
+    const formulaText = document.getElementById("formulaText");
 
-    renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+    function createCube() {
+        cube.innerHTML = "";
 
-    controls = new THREE.OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
+        for (let i = 0; i < 27; i++) {
+            const cubie = document.createElement("div");
+            cubie.className = "cubie";
 
-    raycaster = new THREE.Raycaster();
-    mouse = new THREE.Vector2();
+            ["front", "back", "left", "right", "top", "bottom"].forEach(face => {
+                const faceEl = document.createElement("div");
+                faceEl.className = `face ${face}`;
+                faceEl.dataset.face = face;
+                faceEl.dataset.index = i;
+                cubie.appendChild(faceEl);
+            });
 
-    // 光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.75);
-    dirLight.position.set(6, 9, 6);
-    scene.add(dirLight);
-
-    buildCubeModel();
-    bindCanvasClick();
-    renderLoop();
-}
-
-function resizeCanvas(){
-    const wrap = document.getElementById("cubeWrap");
-    const w = wrap.clientWidth;
-    const h = wrap.clientHeight;
-    camera.aspect = w/h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w,h);
-}
-
-// 构建魔方所有小方块
-function buildCubeModel(){
-    cubePieces.forEach(p => scene.remove(p.mesh));
-    cubePieces = [];
-    const geo = new THREE.BoxGeometry(CUBE_SIZE-GAP, CUBE_SIZE-GAP, CUBE_SIZE-GAP);
-    const coords = [-1, 0, 1];
-    let index = 0;
-    for(let x of coords){
-        for(let y of coords){
-            for(let z of coords){
-                const mat = new THREE.MeshStandardMaterial({color:0x444444});
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(x, y, z);
-                mesh.userData.index = index;
-                scene.add(mesh);
-                cubePieces.push({mesh, x,y,z});
-                index++;
-            }
+            cube.appendChild(cubie);
         }
     }
-}
 
-// 画布点击检测色块
-function bindCanvasClick(){
-    const canvas = document.getElementById("cubeCanvas");
-    canvas.addEventListener("click", (e)=>{
-        if(animating) return;
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = ((e.clientX - rect.left)/rect.width)*2 - 1;
-        mouse.y = -((e.clientY - rect.top)/rect.height)*2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(cubePieces.map(p=>p.mesh));
-        if(intersects.length>0){
-            const hitMesh = intersects[0].object;
-            hitMesh.material.color.set(selectedColorHex);
+    function setStandardCube() {
+        createCube();
+
+        const cubies = document.querySelectorAll(".cubie");
+
+        const layout = [
+            { i: 0, top: "W", left: "O", back: "G" },
+            { i: 1, top: "W", back: "G" },
+            { i: 2, top: "W", right: "R", back: "G" },
+
+            { i: 3, left: "O", back: "G" },
+            { i: 4, back: "G" },
+            { i: 5, right: "R", back: "G" },
+
+            { i: 6, bottom: "Y", left: "O", back: "G" },
+            { i: 7, bottom: "Y", back: "G" },
+            { i: 8, bottom: "Y", right: "R", back: "G" },
+
+            { i: 9, top: "W", left: "O" },
+            { i: 10, top: "W" },
+            { i: 11, top: "W", right: "R" },
+
+            { i: 12, left: "O" },
+            { i: 13, top: "W", bottom: "Y", left: "O", right: "R", front: "B", back: "G" },
+            { i: 14, right: "R" },
+
+            { i: 15, bottom: "Y", left: "O" },
+            { i: 16, bottom: "Y" },
+            { i: 17, bottom: "Y", right: "R" },
+
+            { i: 18, top: "W", left: "O", front: "B" },
+            { i: 19, top: "W", front: "B" },
+            { i: 20, top: "W", right: "R", front: "B" },
+
+            { i: 21, left: "O", front: "B" },
+            { i: 22, front: "B" },
+            { i: 23, right: "R", front: "B" },
+
+            { i: 24, bottom: "Y", left: "O", front: "B" },
+            { i: 25, bottom: "Y", front: "B" },
+            { i: 26, bottom: "Y", right: "R", front: "B" }
+        ];
+
+        layout.forEach(item => {
+            const cubie = cubies[item.i];
+            const faces = cubie.querySelectorAll(".face");
+
+            faces.forEach(faceEl => {
+                const faceName = faceEl.dataset.face;
+                const color = item[faceName];
+
+                if (color) {
+                    faceEl.style.background = COLOR_MAP[color];
+                    faceEl.dataset.color = color;
+                } else {
+                    faceEl.style.background = COLOR_MAP.X;
+                    faceEl.dataset.color = "X";
+                }
+            });
+        });
+
+        statusText.innerText = "当前状态：初始复原状态";
+        formulaText.innerText = "无";
+    }
+
+    function bindColorPicker() {
+        document.querySelectorAll(".color-item").forEach(el => {
+            el.addEventListener("click", () => {
+                document.querySelectorAll(".color-item").forEach(e => e.classList.remove("active"));
+                el.classList.add("active");
+                selectedColor = el.dataset.color;
+            });
+        });
+    }
+
+    function bindCubeClick() {
+        document.querySelectorAll(".face").forEach(faceEl => {
+            faceEl.addEventListener("click", () => {
+                if (animating) return;
+
+                faceEl.style.background = COLOR_MAP[selectedColor];
+                faceEl.dataset.color = selectedColor;
+            });
+        });
+    }
+
+    function bindDrag() {
+        scene.addEventListener("mousedown", e => {
+            if (animating) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        window.addEventListener("mousemove", e => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            cubeRotation.y += deltaX * 0.5;
+            cubeRotation.x -= deltaY * 0.5;
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            cube.style.transform = `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`;
+        });
+
+        window.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+    }
+
+    function bindWheel() {
+        scene.addEventListener("wheel", e => {
+            e.preventDefault();
+            const scale = e.deltaY > 0 ? 0.95 : 1.05;
+            cube.style.transform = `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg) scale(${scale})`;
+        });
+    }
+
+    function resetCube() {
+        document.querySelectorAll(".face").forEach(faceEl => {
+            faceEl.style.background = COLOR_MAP.X;
+            faceEl.dataset.color = "X";
+        });
+
+        statusText.innerText = "当前状态：魔方已清空";
+        formulaText.innerText = "无";
+    }
+
+    function scramble() {
+        if (animating) return;
+
+        animating = true;
+        statusText.innerText = "正在打乱魔方...";
+
+        const moves = ["U", "U'", "D", "D'", "R", "R'", "L", "L'", "F", "F'", "B", "B'"];
+        let result = "";
+
+        for (let i = 0; i < 20; i++) {
+            result += moves[Math.floor(Math.random() * moves.length)] + " ";
         }
-    })
-}
 
-function renderLoop(){
-    requestAnimationFrame(renderLoop);
-    controls.update();
-    renderer.render(scene, camera);
-}
+        formulaText.innerText = result.trim();
 
-// 颜色选择
-document.querySelectorAll(".color-item").forEach(item=>{
-    item.onclick = ()=>{
-        document.querySelectorAll(".color-item").forEach(i=>i.classList.remove("active"));
-        item.classList.add("active");
-        selectedColorHex = item.dataset.color;
-        selectedLetter = item.dataset.letter;
+        setTimeout(() => {
+            animating = false;
+            statusText.innerText = "当前状态：已打乱";
+        }, 600);
     }
-})
 
-// 按钮事件
-const statusText = document.getElementById("status");
-const formulaText = document.getElementById("formulaText");
-
-// 重置魔方
-document.getElementById("btnReset").onclick = async ()=>{
-    if(animating) return;
-    stopAllAnimation();
-    cubeStateStr = "WWWWWWWWWGGGRRRBBBOOOYYYYYYY";
-    statusText.textContent = "当前状态：初始复原状态";
-    formulaText.textContent = "无";
-    cubePieces.forEach(p=>{
-        p.mesh.material.color.set(0x444444);
-    })
-}
-
-// 随机打乱
-document.getElementById("btnScramble").onclick = async ()=>{
-    if(animating) return;
-    stopAllAnimation();
-    statusText.textContent = "正在打乱魔方...";
-    const scrambleMoves = ["U","U'","D","D'","L","L'","R","R'","F","F'","B","B'"];
-    let scramble = "";
-    for(let i=0;i<22;i++){
-        scramble += scrambleMoves[Math.floor(Math.random()*scrambleMoves.length)] + " ";
+    function stopAnimation() {
+        animating = false;
+        statusText.innerText = "当前状态：动画已停止";
     }
-    formulaText.textContent = scramble;
-    statusText.textContent = "魔方已打乱";
-}
 
-// 复原按钮
-document.getElementById("btnSolve").onclick = async ()=>{
-    if(animating){
-        statusText.textContent = "动画运行中，请先停止";
-        return;
+    function solve() {
+        statusText.innerText = "正在计算复原方案...";
+
+        setTimeout(() => {
+            statusText.innerText = "当前状态：演示模式，真实求解需接入Kociemba";
+        }, 1000);
     }
-    statusText.textContent = "正在计算复原方案...";
-    try{
-        // kociemba求解
-        const solver = new Kociemba.Solver();
-        // 这里如果你手动涂色，需要把色块转换成cubeStateStr
-        // 演示：直接求解当前标准态，如果你需要【点击涂色自动识别状态】我可以继续增强
-        const solution = solver.solve(cubeStateStr, 24, 0.02);
-        if(solution){
-            formulaText.textContent = solution;
-            statusText.textContent = "开始自动复原";
-            await playMoves(solution);
-            statusText.textContent = "复原完成！";
-        }else{
-            statusText.textContent = "无法求解，请检查魔方色块是否合法";
-        }
-    }catch(err){
-        statusText.textContent = "求解失败，网络或魔方状态错误";
-        console.error(err);
-    }
-}
 
-// 停止动画
-document.getElementById("btnStop").onclick = ()=>{
-    stopAllAnimation();
-    statusText.textContent = "动画已停止";
-}
+    document.getElementById("btnReset").addEventListener("click", setStandardCube);
+    document.getElementById("btnScramble").addEventListener("click", scramble);
+    document.getElementById("btnStop").addEventListener("click", stopAnimation);
+    document.getElementById("btnSolve").addEventListener("click", solve);
 
-function stopAllAnimation(){
-    animating = false;
-    animationQueue = [];
-}
-
-// 模拟播放旋转步骤（简易动画调度）
-async function playMoves(moveStr){
-    animating = true;
-    const moves = moveStr.trim().split(/\s+/);
-    for(let m of moves){
-        if(!animating) break;
-        statusText.textContent = `执行转动：${m}`;
-        await sleep(380);
-    }
-    animating = false;
-}
-function sleep(ms){
-    return new Promise(res=>setTimeout(res,ms));
-}
-
-init();
+    createCube();
+    setStandardCube();
+    bindColorPicker();
+    bindCubeClick();
+    bindDrag();
+    bindWheel();
 </script>
+
 </body>
 </html>
