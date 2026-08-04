@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>3阶魔方模拟器 | 无穿模WebGL版</title>
+<title>3阶魔方模拟器 | 修复版</title>
 <style>
     * {
         margin: 0;
@@ -29,6 +29,9 @@
         border-radius: 12px;
         height: 100%;
         overflow-y: auto;
+        /* 核心修复：提升层级，防止点击穿透 */
+        position: relative;
+        z-index: 10;
     }
     .color-area {
         margin-bottom: 20px;
@@ -100,6 +103,8 @@
         background: #000000;
         border-radius: 12px;
         overflow: hidden;
+        position: relative;
+        z-index: 1;
     }
 </style>
 </head>
@@ -139,7 +144,7 @@
 
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://unpkg.com/kociemba@2.0.6/dist/kociemba.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/kociemba@2.0.6/dist/kociemba.min.js"></script>
 <script>
 // ===================== 全局配置 =====================
 const COLOR_HEX = {
@@ -171,6 +176,8 @@ camera.position.set(4.2, 4.2, 6.2);
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
+// 修复：允许页面其他元素正常点击
+controls.mouse.button = 0;
 
 // 灯光
 scene.add(new THREE.AmbientLight(0xffffff, 0.32));
@@ -318,9 +325,10 @@ class RubikCube {
                     if(moveCfg.axis === "y") finalQuat.setFromAxisAngle(new THREE.Vector3(0,1,0), moveCfg.angle);
                     if(moveCfg.axis === "z") finalQuat.setFromAxisAngle(new THREE.Vector3(0,0,1), moveCfg.angle);
                     layer.forEach((cb,idx)=>{
-                        cb.x = startPos[idx].clone().applyQuaternion(finalQuat).x;
-                        cb.y = startPos[idx].clone().applyQuaternion(finalQuat).y;
-                        cb.z = startPos[idx].clone().applyQuaternion(finalQuat).z;
+                        const finalPos = startPos[idx].clone().applyQuaternion(finalQuat);
+                        cb.x = finalPos.x;
+                        cb.y = finalPos.y;
+                        cb.z = finalPos.z;
                         cb.mesh.position.set(cb.x, cb.y, cb.z);
                     });
                     resolve();
